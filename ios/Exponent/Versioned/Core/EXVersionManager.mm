@@ -5,7 +5,6 @@
 #import "EXDisabledDevLoadingView.h"
 #import "EXDisabledDevMenu.h"
 #import "EXDisabledRedBox.h"
-#import "EXFileSystem.h"
 #import "EXVersionManager.h"
 #import "EXScopedBridgeModule.h"
 #import "EXStatusBarManager.h"
@@ -35,13 +34,19 @@
 
 #import <objc/message.h>
 
-#import <UMFileSystemInterface/UMFileSystemInterface.h>
-#import <UMCore/UMModuleRegistry.h>
-#import <UMCore/UMModuleRegistryDelegate.h>
+#import <ExpoModulesCore/EXDefines.h>
+#import <ExpoModulesCore/EXModuleRegistry.h>
+#import <ExpoModulesCore/EXModuleRegistryDelegate.h>
 #import <UMReactNativeAdapter/UMNativeModulesProxy.h>
+#import <EXMediaLibrary/EXMediaLibraryImageLoader.h>
+#import <EXFileSystem/EXFileSystem.h>
 #import "EXScopedModuleRegistry.h"
 #import "EXScopedModuleRegistryAdapter.h"
 #import "EXScopedModuleRegistryDelegate.h"
+
+#import <RNReanimated/REAModule.h>
+#import <RNReanimated/REAEventDispatcher.h>
+#import <RNReanimated/NativeProxy.h>
 
 #import <React/RCTCxxBridgeDelegate.h>
 #import <React/CoreModulesPlugins.h>
@@ -49,7 +54,17 @@
 #import <React/JSCExecutorFactory.h>
 #import <strings.h>
 
+// Import 3rd party modules that need to be scoped.
+#import "RNCWebViewManager.h"
+
 RCT_EXTERN NSDictionary<NSString *, NSDictionary *> *EXGetScopedModuleClasses(void);
+RCT_EXTERN void EXRegisterScopedModule(Class, ...);
+
+@interface RCTEventDispatcher (REAnimated)
+
+- (void)setBridge:(RCTBridge*)bridge;
+
+@end
 
 // this is needed because RCTPerfMonitor does not declare a public interface
 // anywhere that we can import.
@@ -66,11 +81,13 @@ RCT_EXTERN NSDictionary<NSString *, NSDictionary *> *EXGetScopedModuleClasses(vo
 
 @end
 
-@interface EXVersionManager ()
+@interface EXVersionManager () <RCTTurboModuleManagerDelegate>
 
 // is this the first time this ABI has been touched at runtime?
 @property (nonatomic, assign) BOOL isFirstLoad;
 @property (nonatomic, strong) NSDictionary *params;
+@property (nonatomic, strong) EXUpdatesRawManifest *manifest;
+@property (nonatomic, strong) RCTTurboModuleManager *turboModuleManager;
 
 @end
 
@@ -78,7 +95,6 @@ RCT_EXTERN NSDictionary<NSString *, NSDictionary *> *EXGetScopedModuleClasses(vo
 
 /**
  *  Expected params:
- *    NSDictionary *manifest
  *    NSDictionary *constants
  *    NSURL *initialUri
  *    @BOOL isDeveloper
@@ -92,27 +108,28 @@ RCT_EXTERN NSDictionary<NSString *, NSDictionary *> *EXGetScopedModuleClasses(vo
  *    id exceptionsManagerDelegate
  */
 - (instancetype)initWithParams:(NSDictionary *)params
+                      manifest:(EXUpdatesRawManifest *)manifest
                   fatalHandler:(void (^)(NSError *))fatalHandler
                    logFunction:(RCTLogFunction)logFunction
                   logThreshold:(NSInteger)threshold
 {
   if (self = [super init]) {
     _params = params;
+    _manifest = manifest;
     [self configureABIWithFatalHandler:fatalHandler logFunction:logFunction logThreshold:threshold];
   }
   return self;
 }
 
++ (void)load
+{
+  // Register scoped 3rd party modules. Some of them are separate pods that
+  // don't have access to EXScopedModuleRegistry and so they can't register themselves.
+  EXRegisterScopedModule([RNCWebViewManager class], EX_KERNEL_SERVICE_NONE, nil);
+}
+
 - (void)bridgeWillStartLoading:(id)bridge
 {
-  // Override the "Reload" button from Redbox to reload the app from manifest
-  // Keep in mind that it is possible this will return a EXDisabledRedBox
-  RCTRedBox *redBox = [self _moduleInstanceForBridge:bridge named:@"RedBox"];
-  [redBox setOverrideReloadAction:^{
-      [[NSNotificationCenter defaultCenter]
-     postNotificationName:EX_UNVERSIONED(@"EXReloadActiveAppRequest") object:nil];
-  }];
-
   // We need to check DEBUG flag here because in ejected projects RCT_DEV is set only for React and not for ExpoKit to which this file belongs to.
   // It can be changed to just RCT_DEV once we deprecate ExpoKit and set that flag for the entire standalone project.
 #if DEBUG || RCT_DEV
@@ -127,18 +144,21 @@ RCT_EXTERN NSDictionary<NSString *, NSDictionary *> *EXGetScopedModuleClasses(vo
    postNotificationName:RCTJavaScriptWillStartLoadingNotification object:bridge];
 }
 
-- (void)bridgeFinishedLoading {
-
-}
-
-- (void)invalidate
+- (void)bridgeFinishedLoading:(id)bridge
 {
-
+  // Override the "Reload" button from Redbox to reload the app from manifest
+  // Keep in mind that it is possible this will return a EXDisabledRedBox
+  RCTRedBox *redBox = [self _moduleInstanceForBridge:bridge named:@"RedBox"];
+  [redBox setOverrideReloadAction:^{
+    [[NSNotificationCenter defaultCenter] postNotificationName:EX_UNVERSIONED(@"EXReloadActiveAppRequest") object:nil];
+  }];
 }
+
+- (void)invalidate {}
 
 - (NSDictionary<NSString *, NSString *> *)devMenuItemsForBridge:(id)bridge
 {
-  RCTDevSettings *devSettings = [self _moduleInstanceForBridge:bridge named:@"DevSettings"];
+  RCTDevSettings *devSettings = (RCTDevSettings *)[self _moduleInstanceForBridge:bridge named:@"DevSettings"];
   BOOL isDevModeEnabled = [self _isDevModeEnabledForBridge:bridge];
   NSMutableDictionary *items = [NSMutableDictionary new];
 
@@ -153,7 +173,7 @@ RCT_EXTERN NSDictionary<NSString *, NSDictionary *> *EXGetScopedModuleClasses(vo
       @"isEnabled": @NO
     };
   }
-  
+
   if (devSettings.isRemoteDebuggingAvailable && isDevModeEnabled) {
     items[@"dev-remote-debug"] = @{
       @"label": (devSettings.isDebuggingRemotely) ? @"Stop Remote Debugging" : @"Debug Remote JS",
@@ -162,7 +182,8 @@ RCT_EXTERN NSDictionary<NSString *, NSDictionary *> *EXGetScopedModuleClasses(vo
   } else {
     items[@"dev-remote-debug"] =  @{
       @"label": @"Remote Debugger Unavailable",
-      @"isEnabled": @NO
+      @"isEnabled": @NO,
+      @"detail": RCTTurboModuleEnabled() ? @"Remote debugging is unavailable while Turbo Modules are enabled. To debug remotely, please set `turboModules` to false in app.json." : [NSNull null]
     };
   }
 
@@ -198,7 +219,7 @@ RCT_EXTERN NSDictionary<NSString *, NSDictionary *> *EXGetScopedModuleClasses(vo
 - (void)selectDevMenuItemWithKey:(NSString *)key onBridge:(id)bridge
 {
   RCTAssertMainQueue();
-  RCTDevSettings *devSettings = [self _moduleInstanceForBridge:bridge named:@"DevSettings"];
+  RCTDevSettings *devSettings = (RCTDevSettings *)[self _moduleInstanceForBridge:bridge named:@"DevSettings"];
   if ([key isEqualToString:@"dev-reload"]) {
     // bridge could be an RCTBridge of any version and we need to cast it since ARC needs to know
     // the return type
@@ -238,16 +259,45 @@ RCT_EXTERN NSDictionary<NSString *, NSDictionary *> *EXGetScopedModuleClasses(vo
 
 - (void)disableRemoteDebuggingForBridge:(id)bridge
 {
-  RCTDevSettings *devSettings = [self _moduleInstanceForBridge:bridge named:@"DevSettings"];
+  RCTDevSettings *devSettings = (RCTDevSettings *)[self _moduleInstanceForBridge:bridge named:@"DevSettings"];
   devSettings.isDebuggingRemotely = NO;
+}
+
+- (void)toggleRemoteDebuggingForBridge:(id)bridge
+{
+  RCTDevSettings *devSettings = (RCTDevSettings *)[self _moduleInstanceForBridge:bridge named:@"DevSettings"];
+  devSettings.isDebuggingRemotely = !devSettings.isDebuggingRemotely;
+}
+
+- (void)togglePerformanceMonitorForBridge:(id)bridge
+{
+  RCTDevSettings *devSettings = (RCTDevSettings *)[self _moduleInstanceForBridge:bridge named:@"DevSettings"];
+  id perfMonitor = [self _moduleInstanceForBridge:bridge named:@"PerfMonitor"];
+  if (perfMonitor) {
+    if (devSettings.isPerfMonitorShown) {
+      [perfMonitor hide];
+      devSettings.isPerfMonitorShown = NO;
+    } else {
+      [perfMonitor show];
+      devSettings.isPerfMonitorShown = YES;
+    }
+  }
 }
 
 - (void)toggleElementInspectorForBridge:(id)bridge
 {
-  RCTDevSettings *devSettings = [self _moduleInstanceForBridge:bridge named:@"DevSettings"];
+  RCTDevSettings *devSettings = (RCTDevSettings *)[self _moduleInstanceForBridge:bridge named:@"DevSettings"];
   [devSettings toggleElementInspector];
 }
 
+#if DEBUG || RCT_DEV
+- (uint32_t)addWebSocketNotificationHandler:(void (^)(NSDictionary<NSString *, id> *))handler
+                                    queue:(dispatch_queue_t)queue
+                                forMethod:(NSString *)method
+{
+  return [[RCTPackagerConnection sharedPackagerConnection] addNotificationHandler:handler queue:queue forMethod:method];
+}
+#endif
 
 #pragma mark - internal
 
@@ -258,21 +308,14 @@ RCT_EXTERN NSDictionary<NSString *, NSDictionary *> *EXGetScopedModuleClasses(vo
 
 - (id<RCTBridgeModule>)_moduleInstanceForBridge:(id)bridge named:(NSString *)name
 {
-  if ([bridge respondsToSelector:@selector(batchedBridge)]) {
-    bridge = [bridge batchedBridge];
-  }
-  RCTModuleData *data = [bridge moduleDataForName:name];
-  if (data) {
-    return [data instance];
-  }
-  return nil;
+  return [bridge moduleForClass:[self getModuleClassFromName:[name UTF8String]]];
 }
 
 - (void)configureABIWithFatalHandler:(void (^)(NSError *))fatalHandler
                          logFunction:(RCTLogFunction)logFunction
                         logThreshold:(NSInteger)threshold
 {
-  RCTEnableTurboModule(YES);
+  RCTEnableTurboModule([self.manifest.experiments[@"turboModules"] boolValue]);
   RCTSetFatalHandler(fatalHandler);
   RCTSetLogThreshold((RCTLogLevel) threshold);
   RCTSetLogFunction(logFunction);
@@ -281,9 +324,6 @@ RCT_EXTERN NSDictionary<NSString *, NSDictionary *> *EXGetScopedModuleClasses(vo
 - (NSArray *)extraModulesForBridge:(id)bridge
 {
   NSDictionary *params = _params;
-  BOOL isDeveloper = [params[@"isDeveloper"] boolValue];
-  NSDictionary *manifest = params[@"manifest"];
-  NSString *experienceId = manifest[@"id"];
   NSDictionary *services = params[@"services"];
 
   NSMutableArray *extraModules = [NSMutableArray arrayWithArray:
@@ -292,10 +332,10 @@ RCT_EXTERN NSDictionary<NSString *, NSDictionary *> *EXGetScopedModuleClasses(vo
                                     [[EXDisabledDevLoadingView alloc] init],
                                     [[EXStatusBarManager alloc] init],
                                     ]];
-  
+
   // add scoped modules
-  [extraModules addObjectsFromArray:[self _newScopedModulesWithExperienceId:experienceId services:services params:params]];
-  
+  [extraModules addObjectsFromArray:[self _newScopedModulesForServices:services params:params]];
+
   if (params[@"testEnvironment"]) {
     EXTestEnvironment testEnvironment = (EXTestEnvironment)[params[@"testEnvironment"] unsignedIntegerValue];
     if (testEnvironment != EXTestEnvironmentNone) {
@@ -303,34 +343,50 @@ RCT_EXTERN NSDictionary<NSString *, NSDictionary *> *EXGetScopedModuleClasses(vo
       [extraModules addObject:testModule];
     }
   }
-  
+
   if (params[@"browserModuleClass"]) {
     Class browserModuleClass = params[@"browserModuleClass"];
-    id homeModule = [[browserModuleClass alloc] initWithExperienceId:experienceId
-                                                    kernelServiceDelegate:services[EX_UNVERSIONED(@"EXHomeModuleManager")]
-                                                                   params:params];
+    id homeModule = [[browserModuleClass alloc] initWithExperienceStableLegacyId:self.manifest.stableLegacyId
+                                                              scopeKey:self.manifest.scopeKey
+                                                           kernelServiceDelegate:services[EX_UNVERSIONED(@"EXHomeModuleManager")]
+                                                                          params:params];
     [extraModules addObject:homeModule];
   }
 
-  UMModuleRegistryProvider *moduleRegistryProvider = [[UMModuleRegistryProvider alloc] initWithSingletonModules:params[@"singletonModules"]];
+  EXModuleRegistryProvider *moduleRegistryProvider = [[EXModuleRegistryProvider alloc] initWithSingletonModules:params[@"singletonModules"]];
 
   Class resolverClass = [EXScopedModuleRegistryDelegate class];
   if (params[@"moduleRegistryDelegateClass"] && params[@"moduleRegistryDelegateClass"] != [NSNull null]) {
     resolverClass = params[@"moduleRegistryDelegateClass"];
   }
 
-  id<UMModuleRegistryDelegate> moduleRegistryDelegate = [[resolverClass alloc] initWithParams:params];
+  id<EXModuleRegistryDelegate> moduleRegistryDelegate = [[resolverClass alloc] initWithParams:params];
   [moduleRegistryProvider setModuleRegistryDelegate:moduleRegistryDelegate];
 
-  EXScopedModuleRegistryAdapter *moduleRegistryAdapter = [[EXScopedModuleRegistryAdapter alloc] initWithModuleRegistryProvider:moduleRegistryProvider];
-  UMModuleRegistry *moduleRegistry = [moduleRegistryAdapter moduleRegistryForParams:params forExperienceId:experienceId withKernelServices:services];
+  EXScopedModuleRegistryAdapter *moduleRegistryAdapter = [[EXScopedModuleRegistryAdapter alloc] initWithModuleRegistryProvider:moduleRegistryProvider swiftModulesProviderClass:NSClassFromString(@"ExpoModulesProvider")];
+  EXModuleRegistry *moduleRegistry = [moduleRegistryAdapter moduleRegistryForParams:params
+                                                        forExperienceStableLegacyId:self.manifest.stableLegacyId
+                                                                           scopeKey:self.manifest.scopeKey
+                                                                           manifest:self.manifest
+                                                                 withKernelServices:services];
   NSArray<id<RCTBridgeModule>> *expoModules = [moduleRegistryAdapter extraModulesForModuleRegistry:moduleRegistry];
   [extraModules addObjectsFromArray:expoModules];
+
+  if (!RCTTurboModuleEnabled()) {
+    [extraModules addObject:[self getModuleInstanceFromClass:[self getModuleClassFromName:"DevSettings"]]];
+    id exceptionsManager = [self getModuleInstanceFromClass:RCTExceptionsManagerCls()];
+    if (exceptionsManager) {
+      [extraModules addObject:exceptionsManager];
+    }
+    [extraModules addObject:[self getModuleInstanceFromClass:[self getModuleClassFromName:"DevMenu"]]];
+    [extraModules addObject:[self getModuleInstanceFromClass:[self getModuleClassFromName:"RedBox"]]];
+    [extraModules addObject:[self getModuleInstanceFromClass:RCTAsyncLocalStorageCls()]];
+  }
 
   return extraModules;
 }
 
-- (NSArray *)_newScopedModulesWithExperienceId: (NSString *)experienceId services:(NSDictionary *)services params:(NSDictionary *)params
+- (NSArray *)_newScopedModulesForServices:(NSDictionary *)services params:(NSDictionary *)params
 {
   NSMutableArray *result = [NSMutableArray array];
   NSDictionary<NSString *, NSDictionary *> *EXScopedModuleClasses = EXGetScopedModuleClasses();
@@ -342,17 +398,26 @@ RCT_EXTERN NSDictionary<NSString *, NSDictionary *> *EXGetScopedModuleClasses(vo
         id service = ([kernelSerivceName isEqualToString:EX_KERNEL_SERVICE_NONE]) ? [NSNull null] : services[kernelSerivceName];
         moduleServices[kernelServiceClassName] = service;
       }
-      
+
       id scopedModule;
       Class scopedModuleClass = NSClassFromString(scopedModuleClassName);
       if (moduleServices.count > 1) {
-        scopedModule = [[scopedModuleClass alloc] initWithExperienceId:experienceId kernelServiceDelegates:moduleServices params:params];
+        scopedModule = [[scopedModuleClass alloc] initWithExperienceStableLegacyId:self.manifest.stableLegacyId
+                                                                scopeKey:self.manifest.scopeKey
+                                                            kernelServiceDelegates:moduleServices
+                                                                            params:params];
       } else if (moduleServices.count == 0) {
-        scopedModule = [[scopedModuleClass alloc] initWithExperienceId:experienceId kernelServiceDelegate:nil params:params];
+        scopedModule = [[scopedModuleClass alloc] initWithExperienceStableLegacyId:self.manifest.stableLegacyId
+                                                                scopeKey:self.manifest.scopeKey
+                                                             kernelServiceDelegate:nil
+                                                                            params:params];
       } else {
-        scopedModule = [[scopedModuleClass alloc] initWithExperienceId:experienceId kernelServiceDelegate:moduleServices[[moduleServices allKeys][0]] params:params];
+        scopedModule = [[scopedModuleClass alloc] initWithExperienceStableLegacyId:self.manifest.stableLegacyId
+                                                                scopeKey:self.manifest.scopeKey
+                                                             kernelServiceDelegate:moduleServices[[moduleServices allKeys][0]]
+                                                                            params:params];
       }
-      
+
       if (scopedModule) {
         [result addObject:scopedModule];
       }
@@ -396,7 +461,7 @@ RCT_EXTERN NSDictionary<NSString *, NSDictionary *> *EXGetScopedModuleClasses(vo
   // Standard
   if (moduleClass == RCTImageLoader.class) {
     return [[moduleClass alloc] initWithRedirectDelegate:nil loadersProvider:^NSArray<id<RCTImageURLLoader>> *{
-      return @[[RCTLocalAssetImageLoader new]];
+      return @[[RCTLocalAssetImageLoader new], [EXMediaLibraryImageLoader new]];
     } decodersProvider:^NSArray<id<RCTImageDataDecoder>> *{
       return @[[RCTGIFImageDecoder new]];
     }];
@@ -413,7 +478,7 @@ RCT_EXTERN NSDictionary<NSString *, NSDictionary *> *EXGetScopedModuleClasses(vo
   // Expo-specific
   if (moduleClass == EXDevSettings.class) {
     BOOL isDevelopment = ![self _isOpeningHomeInProductionMode] && [_params[@"isDeveloper"] boolValue];
-    return [[moduleClass alloc] initWithExperienceId:[self _experienceId] isDevelopment:isDevelopment];
+    return [[moduleClass alloc] initWithScopeKey:self.manifest.scopeKey isDevelopment:isDevelopment];
   } else if (moduleClass == RCTExceptionsManagerCls()) {
     id exceptionsManagerDelegate = _params[@"exceptionsManagerDelegate"];
     if (exceptionsManagerDelegate) {
@@ -436,14 +501,46 @@ RCT_EXTERN NSDictionary<NSString *, NSDictionary *> *EXGetScopedModuleClasses(vo
   return [moduleClass new];
 }
 
-- (NSString *)_experienceId
+- (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:(const std::string &)name
+                                                       instance:(id<RCTTurboModule>)instance
+                                                      jsInvoker:(std::shared_ptr<facebook::react::CallInvoker>)jsInvoker
+                                                  nativeInvoker:(std::shared_ptr<facebook::react::CallInvoker>)nativeInvoker
+                                                     perfLogger:(id<RCTTurboModulePerformanceLogger>)perfLogger
 {
-  return _params[@"manifest"][@"id"];
+  // TODO: ADD
+  return nullptr;
 }
 
 - (BOOL)_isOpeningHomeInProductionMode
 {
-  return _params[@"browserModuleClass"] && !_params[@"manifest"][@"developer"];
+  return _params[@"browserModuleClass"] && !self.manifest.developer;
+}
+
+- (void *)versionedJsExecutorFactoryForBridge:(RCTBridge *)bridge
+{
+  [bridge moduleForClass:[RCTEventDispatcher class]];
+  RCTEventDispatcher *eventDispatcher = [REAEventDispatcher new];
+  [eventDispatcher setBridge:bridge];
+  [bridge updateModuleWithInstance:eventDispatcher];
+  _bridge_reanimated = bridge;
+
+  EX_WEAKIFY(self);
+  return new facebook::react::JSCExecutorFactory([EXWeak_self, bridge](facebook::jsi::Runtime &runtime) {
+    if (!bridge) {
+      return;
+    }
+    EX_ENSURE_STRONGIFY(self);
+    self->_turboModuleManager = [[RCTTurboModuleManager alloc] initWithBridge:bridge
+                                                                     delegate:self
+                                                                    jsInvoker:bridge.jsCallInvoker];
+    [self->_turboModuleManager installJSBindingWithRuntime:&runtime];
+
+    auto reanimatedModule = reanimated::createReanimatedModule(bridge.jsCallInvoker);
+    runtime.global().setProperty(runtime,
+                                 jsi::PropNameID::forAscii(runtime, "__reanimatedModuleProxy"),
+                                 jsi::Object::createFromHostObject(runtime, reanimatedModule)
+    );
+  });
 }
 
 @end

@@ -3,27 +3,29 @@ title: Up and Running
 sidebar_label: Up and Running
 ---
 
-> This guide assumes that you have Xcode and/or Android Studio installed and working. It also assumes that you want to create a new project. If you have an existing app that you would like to integrate the Expo SDK in an existing app, read the [existing apps guide](/bare/existing-apps/).
+import TerminalBlock from '~/components/plugins/TerminalBlock';
 
-To get started with a bare React Native project, run `expo init` and choose one of the bare templates. We'll use the minimum template here.
+> This guide assumes that you have Xcode and/or Android Studio installed and working. It also assumes that you want to create a new project. If you have an existing app that you would like to integrate the Expo SDK in an existing app, read the [existing apps guide](../bare/existing-apps.md).
+
+Before you get started with a bare React Native project, make sure you set up your environment for [React Native CLI](https://reactnative.dev/docs/environment-setup).
+
+After this, let's get started with a bare project. Run `expo init` and choose one of the bare templates. We'll use the minimum template here.
 
 ```sh
 # If you don't have expo-cli yet, get it
 npm i -g expo-cli
-# If you don't have react-native-cli yet, get it
-npm i -g react-native-cli
 # This is a shortcut to skip the UI for picking the template
 expo init --template bare-minimum
 ```
 
-Next, let's get the project running. Go into your project directory and run `react-native run-ios` or `react-native run-android` &mdash; hurray! Your project is working.
+Next, let's get the project running. Go into your project directory and run `expo run:ios` or `expo run:android` &mdash; hurray! Your project is working.
 
 ## Using react-native-unimodules
 
-Bare template projects come with `react-native-unimodules` installed and configured. This package gives you access to some commonly useful APIs, like `Asset`, `Constants`, `FileSystem`, and `Permissions`. You can import these from `react-native-unimodules` like so:
+Bare template projects come with `react-native-unimodules` installed and configured. This package gives you access to some commonly useful APIs, like `Asset`, `Constants` and `FileSystem`. You can import these from `react-native-unimodules` like so:
 
 ```js
-import { Asset, Constants, FileSystem, Permissions } from 'react-native-unimodules';
+import { Asset, Constants, FileSystem } from 'react-native-unimodules';
 ```
 
 ## Install an Expo SDK package
@@ -36,24 +38,22 @@ npm install expo-web-browser
 
 Open up `App.js` and add a button that, when pressed, opens up a web browser. Here's some code for you.
 
-```js
+```tsx
 import * as React from 'react';
 import { Button, View } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 
-export default class App extends React.Component {
-  render() {
-    return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <Button
-          title="Open a web browser"
-          onPress={() => {
-            WebBrowser.openBrowserAsync('https://expo.io');
-          }}
-        />
-      </View>
-    );
-  }
+export default function App() {
+  return (
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+      <Button
+        title="Open a web browser"
+        onPress={() => {
+          WebBrowser.openBrowserAsync('https://expo.io');
+        }}
+      />
+    </View>
+  );
 }
 ```
 
@@ -61,15 +61,16 @@ This will not yet work because we haven't linked the native code that powers it.
 
 ### iOS configuration
 
-Bare projects are initialized using [CocoaPods](https://cocoapods.org/), a dependency manager for iOS projects.
+<TerminalBlock cmd={['# Build your native iOS project', 'expo run:ios']} />
 
-- Run `npx pod-install` to link the native iOS packages using CocoaPods.
-- Run `npx react-native run-ios` to rebuild your project with the native code linked.
+You may need to run `npx pod-install` to link the native iOS packages using [CocoaPods](https://cocoapods.org/), this is like running `yarn` or `npm install` in an Expo project. `expo run:ios` does this automatically when the `package.json` changes.
 
 ### Android configuration
 
-You don't have to do anything, just run the project with `npx react-native run-android`. Once the app is built, press the "Open a web browser" button and watch the browser open. Success! Happy times.
+<TerminalBlock cmd={['# Build your native Android project', 'expo run:android']} />
+
+Once the app is built, press the "Open a web browser" button and watch the browser open. Success! Happy times.
 
 ## What now?
 
-Most of the Expo SDKs APIs are available in bare React Native projects and can be installed using a process very similar to the above. You can see which are supported and which aren't in the [Supported Expo SDK Packages](../unimodules-full-list/) section, or just go ahead and browse the `API Reference` section and follow the installation instructions linked there, read the API documentation, and enjoy. Good luck building your app!
+Most of the Expo SDKs APIs are available in bare React Native projects and can be installed using a process very similar to the above. You can see which are supported and which aren't in the [Supported Expo SDK Packages](unimodules-full-list.md) section, or just go ahead and browse the `API Reference` section and follow the installation instructions linked there, read the API documentation, and enjoy. Good luck building your app!

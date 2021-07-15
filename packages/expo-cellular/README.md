@@ -13,12 +13,21 @@ For managed [managed](https://docs.expo.io/versions/latest/introduction/managed-
 
 # Installation in bare React Native projects
 
-For bare React Native projects, you must ensure that you have [installed and configured the `react-native-unimodules` package](https://github.com/unimodules/react-native-unimodules) before continuing.
+For bare React Native projects, you must ensure that you have [installed and configured the `react-native-unimodules` package](https://github.com/expo/expo/tree/master/packages/react-native-unimodules) before continuing.
 
 ### Add the package to your npm dependencies
 
 ```
 expo install expo-cellular
+```
+
+### Configure for Android
+
+This package requires the `android.permission.READ_PHONE_STATE` be added to your `AndroidManifest.xml`, this is used for `TelephonyManager` on Android. We **do not** require the more risky `READ_PRIVILEGED_PHONE_STATE` permission.
+
+```xml
+<!-- Added permissions -->
+<uses-permission android:name="android.permission.READ_PHONE_STATE" />
 ```
 
 # Contributing

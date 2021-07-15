@@ -12,8 +12,8 @@ import org.unimodules.core.Promise
 import org.unimodules.core.interfaces.ActivityProvider
 import org.unimodules.core.interfaces.ExpoMethod
 
-class StoreReviewModule(private val mContext: Context)
-  : ExportedModule(mContext) {
+class StoreReviewModule(private val mContext: Context) :
+  ExportedModule(mContext) {
   companion object {
     private const val NAME = "ExpoStoreReview"
   }
@@ -49,7 +49,7 @@ class StoreReviewModule(private val mContext: Context)
           if (task.isSuccessful) {
             promise.resolve(null)
           } else {
-            promise.reject(null)
+            promise.reject("ERR_STORE_REVIEW_FAILED", "Android ReviewManager task failed")
           }
         }
       } else {

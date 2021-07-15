@@ -1,11 +1,12 @@
 #import <EXImagePicker/EXImagePicker.h>
 #import <EXImagePicker/EXImagePickerCameraPermissionRequester.h>
-#import <EXImagePicker/EXImagePickerCameraRollPermissionRequester.h>
+#import <EXImagePicker/EXImagePickerMediaLibraryPermissionRequester.h>
+#import <EXImagePicker/EXImagePickerMediaLibraryWriteOnlyPermissionRequester.h>
 
-#import <UMFileSystemInterface/UMFileSystemInterface.h>
+#import <ExpoModulesCore/EXFileSystemInterface.h>
 #import <UMCore/UMUtilitiesInterface.h>
-#import <UMPermissionsInterface/UMPermissionsInterface.h>
-#import <UMPermissionsInterface/UMPermissionsMethodsDelegate.h>
+#import <ExpoModulesCore/EXPermissionsInterface.h>
+#import <ExpoModulesCore/EXPermissionsMethodsDelegate.h>
 
 @import MobileCoreServices;
 @import Photos;
@@ -24,7 +25,7 @@ const CGFloat EXDefaultImageQuality = 0.2;
 @property (nonatomic, retain) NSMutableDictionary *options;
 @property (nonatomic, strong) NSDictionary *customButtons;
 @property (nonatomic, weak) UMModuleRegistry *moduleRegistry;
-@property (nonatomic, weak) id<UMPermissionsInterface> permissionsManager;
+@property (nonatomic, weak) id<EXPermissionsInterface> permissionsManager;
 @property (nonatomic, assign) BOOL shouldRestoreStatusBarVisibility;
 @property (nonatomic, weak) UIScrollView *imageScrollView;
 
@@ -40,7 +41,8 @@ UM_EXPORT_MODULE(ExponentImagePicker);
     self.defaultOptions = @{
                             @"allowsEditing": @NO,
                             @"base64": @NO,
-                            @"videoMaxDuration": @0
+                            @"videoMaxDuration": @0,
+                            @"videoQuality": @0
                             };
     self.shouldRestoreStatusBarVisibility = NO;
   }
@@ -55,30 +57,41 @@ UM_EXPORT_MODULE(ExponentImagePicker);
 - (void)setModuleRegistry:(UMModuleRegistry *)moduleRegistry
 {
   _moduleRegistry = moduleRegistry;
-  _permissionsManager = [self.moduleRegistry getModuleImplementingProtocol:@protocol(UMPermissionsInterface)];
-  [UMPermissionsMethodsDelegate registerRequesters:@[
+  _permissionsManager = [self.moduleRegistry getModuleImplementingProtocol:@protocol(EXPermissionsInterface)];
+  [EXPermissionsMethodsDelegate registerRequesters:@[
                                                     [EXImagePickerCameraPermissionRequester new],
-                                                    [EXImagePickerCameraRollPermissionRequester new]
+                                                    [EXImagePickerMediaLibraryPermissionRequester new],
+                                                    [EXImagePickerMediaLibraryWriteOnlyPermissionRequester new]
                                                     ]
                            withPermissionsManager:_permissionsManager];
+}
+
+- (id)requesterClass:(BOOL)writeOnly
+{
+  if (writeOnly) {
+    return [EXImagePickerMediaLibraryWriteOnlyPermissionRequester class];
+  } else {
+    return [EXImagePickerMediaLibraryPermissionRequester class];
+  }
 }
 
 UM_EXPORT_METHOD_AS(getCameraPermissionsAsync,
                     getCameraPermissionsAsync:(UMPromiseResolveBlock)resolve
                     rejecter:(UMPromiseRejectBlock)reject)
 {
-  [UMPermissionsMethodsDelegate getPermissionWithPermissionsManager:_permissionsManager
+  [EXPermissionsMethodsDelegate getPermissionWithPermissionsManager:_permissionsManager
                                                       withRequester:[EXImagePickerCameraPermissionRequester class]
                                                             resolve:resolve
                                                              reject:reject];
 }
 
-UM_EXPORT_METHOD_AS(getCameraRollPermissionsAsync,
-                    getPermissionsAsync:(UMPromiseResolveBlock)resolve
+UM_EXPORT_METHOD_AS(getMediaLibraryPermissionsAsync,
+                    getPermissionsAsync:(BOOL)writeOnly
+                    resolver:(UMPromiseResolveBlock)resolve
                     rejecter:(UMPromiseRejectBlock)reject)
 {
-  [UMPermissionsMethodsDelegate getPermissionWithPermissionsManager:_permissionsManager
-                                                      withRequester:[EXImagePickerCameraRollPermissionRequester class]
+  [EXPermissionsMethodsDelegate getPermissionWithPermissionsManager:_permissionsManager
+                                                      withRequester:[self requesterClass:writeOnly]
                                                             resolve:resolve
                                                              reject:reject];
 }
@@ -87,18 +100,19 @@ UM_EXPORT_METHOD_AS(requestCameraPermissionsAsync,
                     requestCameraPermissionsAsync:(UMPromiseResolveBlock)resolve
                     rejecter:(UMPromiseRejectBlock)reject)
 {
-  [UMPermissionsMethodsDelegate askForPermissionWithPermissionsManager:_permissionsManager
+  [EXPermissionsMethodsDelegate askForPermissionWithPermissionsManager:_permissionsManager
                                                          withRequester:[EXImagePickerCameraPermissionRequester class]
                                                                resolve:resolve
                                                                 reject:reject];
 }
 
-UM_EXPORT_METHOD_AS(requestCameraRollPermissionsAsync,
-                    requestCameraRollPermissionsAsync:(UMPromiseResolveBlock)resolve
+UM_EXPORT_METHOD_AS(requestMediaLibraryPermissionsAsync,
+                    requestCameraRollPermissionsAsync:(BOOL)writeOnly
+                    resolver:(UMPromiseResolveBlock)resolve
                     rejecter:(UMPromiseRejectBlock)reject)
 {
-  [UMPermissionsMethodsDelegate askForPermissionWithPermissionsManager:_permissionsManager
-                                                         withRequester:[EXImagePickerCameraRollPermissionRequester class]
+  [EXPermissionsMethodsDelegate askForPermissionWithPermissionsManager:_permissionsManager
+                                                         withRequester:[self requesterClass:writeOnly]
                                                                resolve:resolve
                                                                 reject:reject];
 }
@@ -173,7 +187,10 @@ UM_EXPORT_METHOD_AS(launchImageLibraryAsync, launchImageLibraryAsync:(NSDictiona
     if (@available(iOS 11.0, *)) {
       self.picker.videoExportPreset = [self importVideoExportPreset:self.options[@"videoExportPreset"]];
     }
-    
+      
+    NSNumber* videoQuality = [self.options valueForKey:@"videoQuality"];
+    self.picker.videoQuality = [videoQuality intValue];
+
     NSTimeInterval videoMaxDuration = [[self.options objectForKey:@"videoMaxDuration"] doubleValue];
     
     if ([[self.options objectForKey:@"allowsEditing"] boolValue]) {
@@ -192,7 +209,7 @@ UM_EXPORT_METHOD_AS(launchImageLibraryAsync, launchImageLibraryAsync:(NSDictiona
     
     self.picker.videoMaximumDuration = videoMaxDuration;
     
-    self.picker.modalPresentationStyle = UIModalPresentationOverCurrentContext;
+    self.picker.modalPresentationStyle = UIModalPresentationPageSheet;
     self.picker.delegate = self;
 
     [self maybePreserveVisibilityAndHideStatusBar:[[self.options objectForKey:@"allowsEditing"] boolValue]];
@@ -208,7 +225,7 @@ UM_EXPORT_METHOD_AS(launchImageLibraryAsync, launchImageLibraryAsync:(NSDictiona
     NSString *mediaType = [info objectForKey:UIImagePickerControllerMediaType];
     NSMutableDictionary *response = [[NSMutableDictionary alloc] init];
     response[@"cancelled"] = @NO;
-    id<UMFileSystemInterface> fileSystem = [self.moduleRegistry getModuleImplementingProtocol:@protocol(UMFileSystemInterface)];
+    id<EXFileSystemInterface> fileSystem = [self.moduleRegistry getModuleImplementingProtocol:@protocol(EXFileSystemInterface)];
     if (!fileSystem) {
       self.reject(@"E_MISSING_MODULE", @"No FileSystem module", nil);
       return;
@@ -289,7 +306,7 @@ UM_EXPORT_METHOD_AS(launchImageLibraryAsync, launchImageLibraryAsync:(NSDictiona
     CFRelease(imageDestination);
   }
 
-  id<UMFileSystemInterface> fileSystem = [self.moduleRegistry getModuleImplementingProtocol:@protocol(UMFileSystemInterface)];
+  id<EXFileSystemInterface> fileSystem = [self.moduleRegistry getModuleImplementingProtocol:@protocol(EXFileSystemInterface)];
   if (!fileSystem) {
     self.reject(@"E_NO_MODULE", @"No FileSystem module.", nil);
     return;
@@ -391,7 +408,7 @@ UM_EXPORT_METHOD_AS(launchImageLibraryAsync, launchImageLibraryAsync:(NSDictiona
 
   response[@"type"] = @"video";
   NSError *error = nil;
-  id<UMFileSystemInterface> fileSystem = [self.moduleRegistry getModuleImplementingProtocol:@protocol(UMFileSystemInterface)];
+  id<EXFileSystemInterface> fileSystem = [self.moduleRegistry getModuleImplementingProtocol:@protocol(EXFileSystemInterface)];
   if (!fileSystem) {
     self.reject(@"E_NO_MODULE", @"No FileSystem module.", nil);
     return;
@@ -582,7 +599,7 @@ UM_EXPORT_METHOD_AS(launchImageLibraryAsync, launchImageLibraryAsync:(NSDictiona
   if (@available(iOS 11, *)) {
     return true;
   }
-  return [_permissionsManager hasGrantedPermissionUsingRequesterClass:[EXImagePickerCameraRollPermissionRequester class]];
+  return [_permissionsManager hasGrantedPermissionUsingRequesterClass:[EXImagePickerMediaLibraryPermissionRequester class]];
 }
 
 

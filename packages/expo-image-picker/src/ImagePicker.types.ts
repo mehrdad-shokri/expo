@@ -1,11 +1,16 @@
-import { PermissionResponse } from 'unimodules-permissions-interface';
+import { PermissionResponse } from 'expo-modules-core';
 
 export { PermissionResponse as CameraPermissionResponse };
 
-export type CameraRollPermissionResponse = PermissionResponse & {
+export type MediaLibraryPermissionResponse = PermissionResponse & {
   // iOS only
   accessPrivileges?: 'all' | 'limited' | 'none';
 };
+
+/**
+ * @deprecated Use `ImagePicker.MediaLibraryPermissionResponse`
+ */
+export type CameraRollPermissionResponse = MediaLibraryPermissionResponse;
 
 export enum MediaTypeOptions {
   All = 'All',
@@ -25,6 +30,15 @@ export enum VideoExportPreset {
   H264_3840x2160 = 8,
   HEVC_1920x1080 = 9,
   HEVC_3840x2160 = 10,
+}
+
+export enum UIImagePickerControllerQualityType {
+  High = 0,
+  Medium = 1,
+  Low = 2,
+  VGA640x480 = 3,
+  IFrame1280x720 = 4,
+  IFrame960x540 = 5,
 }
 
 export type ImageInfo = {
@@ -55,7 +69,11 @@ export type ImagePickerOptions = {
   mediaTypes?: MediaTypeOptions;
   exif?: boolean;
   base64?: boolean;
+  /**
+   * @deprecated see [iOS videoExportPreset](https://developer.apple.com/documentation/uikit/uiimagepickercontroller/2890964-videoexportpreset?language=objc)
+   */
   videoExportPreset?: VideoExportPreset;
+  videoQuality?: UIImagePickerControllerQualityType;
   allowsMultipleSelection?: boolean;
   videoMaxDuration?: number;
 };
@@ -64,6 +82,7 @@ export type OpenFileBrowserOptions = {
   mediaTypes: MediaTypeOptions;
   capture?: boolean;
   allowsMultipleSelection: boolean;
+  base64: boolean;
 };
 
 export type ExpandImagePickerResult<

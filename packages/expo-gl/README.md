@@ -13,7 +13,7 @@ For managed [managed](https://docs.expo.io/versions/latest/introduction/managed-
 
 # Installation in bare React Native projects
 
-For bare React Native projects, you must ensure that you have [installed and configured the `react-native-unimodules` package](https://github.com/unimodules/react-native-unimodules) before continuing.
+For bare React Native projects, you must ensure that you have [installed and configured the `react-native-unimodules` package](https://github.com/expo/expo/tree/master/packages/react-native-unimodules) before continuing.
 
 ### Install expo-gl-cpp
 
@@ -27,12 +27,12 @@ expo install expo-gl
 
 ### Compatibility
 
-To use version `9.0.0` or newer of `expo-gl` you will need to use at least version `0.63.0` of React Native.
+To use version `9.0.0` or newer of `expo-gl` you will need to use at least version `0.63.1` of React Native.
 
 | expo-gl | react-native |
 | ------- | ------------ |
 | <=8.x.x | \*           |
-| >=9.0.0 | >=0.63       |
+| >=9.0.0 | >=0.63.1     |
 
 ### Configure for iOS
 

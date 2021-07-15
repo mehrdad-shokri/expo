@@ -15,15 +15,14 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
-
 import expo.modules.notifications.notifications.enums.NotificationPriority;
 import expo.modules.notifications.notifications.interfaces.NotificationBuilder;
 import expo.modules.notifications.notifications.model.NotificationAction;
 import expo.modules.notifications.notifications.model.NotificationContent;
 import expo.modules.notifications.notifications.model.NotificationRequest;
+import expo.modules.notifications.service.NotificationsService;
 
 import static expo.modules.notifications.notifications.model.NotificationResponse.DEFAULT_ACTION_IDENTIFIER;
-import static expo.modules.notifications.notifications.service.NotificationResponseReceiver.getActionIntent;
 
 /**
  * {@link NotificationBuilder} interpreting a JSON request object.
@@ -72,12 +71,8 @@ public class ExpoNotificationBuilder extends ChannelAwareNotificationBuilder {
     } else if (shouldPlayDefaultSound) {
       builder.setDefaults(NotificationCompat.DEFAULT_SOUND);
     } else {
-      // Remove any sound or vibration attached by notification options.
-      builder.setDefaults(0);
-      // Remove any vibration pattern attached to the builder by overriding
-      // it with a no-vibrate pattern. It also doubles as a cue for the OS
-      // that given high priority it should be displayed as a heads-up notification.
-      builder.setVibrate(NO_VIBRATE_PATTERN);
+      // Notification will not vibrate or play sound, regardless of channel
+      builder.setSilent(true);
     }
 
     if (shouldPlaySound() && content.getSound() != null) {
@@ -99,7 +94,7 @@ public class ExpoNotificationBuilder extends ChannelAwareNotificationBuilder {
     }
 
     // Save the notification request in extras for later usage
-    // eg. in ExpoNotificationsService when we fetch active notifications.
+    // eg. in ExpoPresentationDelegate when we fetch active notifications.
     // Otherwise we'd have to create expo.Notification from android.Notification
     // and deal with two-way interpreting.
     Bundle requestExtras = new Bundle();
@@ -108,9 +103,9 @@ public class ExpoNotificationBuilder extends ChannelAwareNotificationBuilder {
     // so we go around it by marshalling and unmarshalling the object ourselves.
     requestExtras.putByteArray(EXTRAS_MARSHALLED_NOTIFICATION_REQUEST_KEY, marshallNotificationRequest(getNotification().getNotificationRequest()));
     builder.addExtras(requestExtras);
-    
+
     NotificationAction defaultAction = new NotificationAction(DEFAULT_ACTION_IDENTIFIER, null, true);
-    builder.setContentIntent(getActionIntent(getContext(), defaultAction, getNotification()));
+    builder.setContentIntent(NotificationsService.Companion.createNotificationResponseIntent(getContext(), getNotification(), defaultAction));
 
     return builder;
   }
@@ -211,6 +206,8 @@ public class ExpoNotificationBuilder extends ChannelAwareNotificationBuilder {
           ? requestPriority.getNativeValue()
           : NotificationPriority.DEFAULT.getNativeValue();
 
+      // TODO (barthap): This is going to be a dead code upon removing presentNotificationAsync()
+      // shouldShowAlert() will always be false here.
       if (getNotificationBehavior().shouldShowAlert()) {
         // Display as a heads-up notification, as per the behavior
         // while also allowing making the priority higher.

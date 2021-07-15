@@ -14,8 +14,8 @@ The following example contains a `View` which will fade in and fade out based on
 > Don't modify the animated value directly. You can use the [`useRef` Hook](https://reactjs.org/docs/hooks-reference.html#useref) to return a mutable ref object. This ref object's `current` property is initialized as the given argument and persists throughout the component lifecycle.
 
 ```js
-import React, { useRef } from "react";
-import { Animated, Text, View, StyleSheet, Button } from "react-native";
+import React, { useRef } from 'react';
+import { Animated, Text, View, StyleSheet, Button } from 'react-native';
 
 export default function App() {
   // fadeAnim will be used as the value for opacity. Initial Value: 0
@@ -25,7 +25,7 @@ export default function App() {
     // Will change fadeAnim value to 1 in 5 seconds
     Animated.timing(fadeAnim, {
       toValue: 1,
-      duration: 5000
+      duration: 5000,
     }).start();
   };
 
@@ -33,7 +33,7 @@ export default function App() {
     // Will change fadeAnim value to 0 in 5 seconds
     Animated.timing(fadeAnim, {
       toValue: 0,
-      duration: 5000
+      duration: 5000,
     }).start();
   };
 
@@ -43,10 +43,9 @@ export default function App() {
         style={[
           styles.fadingContainer,
           {
-            opacity: fadeAnim // Bind opacity to animated value
-          }
-        ]}
-      >
+            opacity: fadeAnim, // Bind opacity to animated value
+          },
+        ]}>
         <Text style={styles.fadingText}>Fading View!</Text>
       </Animated.View>
       <View style={styles.buttonRow}>
@@ -60,23 +59,23 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center"
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   fadingContainer: {
     paddingVertical: 8,
     paddingHorizontal: 16,
-    backgroundColor: "powderblue"
+    backgroundColor: 'powderblue',
   },
   fadingText: {
     fontSize: 28,
-    textAlign: "center",
-    margin: 10
+    textAlign: 'center',
+    margin: 10,
   },
   buttonRow: {
-    flexDirection: "row",
-    marginVertical: 16
-  }
+    flexDirection: 'row',
+    marginVertical: 16,
+  },
 });
 ```
 
@@ -86,8 +85,8 @@ Refer to the [Animations](https://reactnative.dev/docs/animations#animated-api) 
 
 There are two value types you can use with `Animated`:
 
-- [`Animated.Value()`](../animated/#value) for single values
-- [`Animated.ValueXY()`](../animated/#valuexy) for vectors
+- [`Animated.Value()`](animated.md#value) for single values
+- [`Animated.ValueXY()`](animated.md#valuexy) for vectors
 
 `Animated.Value` can bind to style properties or other props, and can be interpolated as well. A single `Animated.Value` can drive any number of properties.
 
@@ -95,9 +94,9 @@ There are two value types you can use with `Animated`:
 
 `Animated` provides three types of animation types. Each animation type provides a particular animation curve that controls how your values animate from their initial value to the final value:
 
-- [`Animated.decay()`](../animated/#decay) starts with an initial velocity and gradually slows to a stop.
-- [`Animated.spring()`](../animated/#spring) provides a basic spring physics model.
-- [`Animated.timing()`](../animated/#timing) animates a value over time using [easing functions](../easing/).
+- [`Animated.decay()`](animated.md#decay) starts with an initial velocity and gradually slows to a stop.
+- [`Animated.spring()`](animated.md#spring) provides a basic spring physics model.
+- [`Animated.timing()`](animated.md#timing) animates a value over time using [easing functions](easing.md).
 
 In most cases, you will be using `timing()`. By default, it uses a symmetric easeInOut curve that conveys the gradual acceleration of an object to full speed and concludes by gradually decelerating to a stop.
 
@@ -121,7 +120,7 @@ You can use the native driver by specifying `useNativeDriver: true` in your anim
 
 Only animatable components can be animated. These unique components do the magic of binding the animated values to the properties, and do targeted native updates to avoid the cost of the react render and reconciliation process on every frame. They also handle cleanup on unmount so they are safe by default.
 
-- [`createAnimatedComponent()`](../animated/#createanimatedcomponent) can be used to make a component animatable.
+- [`createAnimatedComponent()`](animated.md#createanimatedcomponent) can be used to make a component animatable.
 
 `Animated` exports the following animatable components using the above wrapper:
 
@@ -136,10 +135,10 @@ Only animatable components can be animated. These unique components do the magic
 
 Animations can also be combined in complex ways using composition functions:
 
-- [`Animated.delay()`](../animated/#delay) starts an animation after a given delay.
-- [`Animated.parallel()`](../animated/#parallel) starts a number of animations at the same time.
-- [`Animated.sequence()`](../animated/#sequence) starts the animations in order, waiting for each to complete before starting the next.
-- [`Animated.stagger()`](../animated/#stagger) starts animations in order and in parallel, but with successive delays.
+- [`Animated.delay()`](animated.md#delay) starts an animation after a given delay.
+- [`Animated.parallel()`](animated.md#parallel) starts a number of animations at the same time.
+- [`Animated.sequence()`](animated.md#sequence) starts the animations in order, waiting for each to complete before starting the next.
+- [`Animated.stagger()`](animated.md#stagger) starts animations in order and in parallel, but with successive delays.
 
 Animations can also be chained together by setting the `toValue` of one animation to be another `Animated.Value`. See [Tracking dynamic values](https://reactnative.dev/docs/animations#tracking-dynamic-values) in the Animations guide.
 
@@ -149,17 +148,17 @@ By default, if one animation is stopped or interrupted, then all other animation
 
 You can combine two animated values via addition, subtraction, multiplication, division, or modulo to make a new animated value:
 
-- [`Animated.add()`](../animated/#add)
-- [`Animated.subtract()`](../animated/#subtract)
-- [`Animated.divide()`](../animated/#divide)
-- [`Animated.modulo()`](../animated/#modulo)
-- [`Animated.multiply()`](../animated/#multiply)
+- [`Animated.add()`](animated.md#add)
+- [`Animated.subtract()`](animated.md#subtract)
+- [`Animated.divide()`](animated.md#divide)
+- [`Animated.modulo()`](animated.md#modulo)
+- [`Animated.multiply()`](animated.md#multiply)
 
 ### Interpolation
 
 The `interpolate()` function allows input ranges to map to different output ranges. By default, it will extrapolate the curve beyond the ranges given, but you can also have it clamp the output value. It uses linear interpolation by default but also supports easing functions.
 
-- [`interpolate()`](../animated/#interpolate)
+- [`interpolate()`](#interpolation)
 
 Read more about interpolation in the [Animation](https://reactnative.dev/docs/animations#interpolation) guide.
 
@@ -167,22 +166,20 @@ Read more about interpolation in the [Animation](https://reactnative.dev/docs/an
 
 Gestures, like panning or scrolling, and other events can map directly to animated values using `Animated.event()`. This is done with a structured map syntax so that values can be extracted from complex event objects. The first level is an array to allow mapping across multiple args, and that array contains nested objects.
 
-- [`Animated.event()`](../animated/#event)
+- [`Animated.event()`](animated.md#event)
 
 For example, when working with horizontal scrolling gestures, you would do the following in order to map `event.nativeEvent.contentOffset.x` to `scrollX` (an `Animated.Value`):
 
 ```js
-
- onScroll={Animated.event(
-   // scrollX = e.nativeEvent.contentOffset.x
-   [{ nativeEvent: {
-        contentOffset: {
-          x: scrollX
-        }
+onScroll={Animated.event(
+  // scrollX = e.nativeEvent.contentOffset.x
+  [{ nativeEvent: {
+      contentOffset: {
+        x: scrollX
       }
-    }]
- )}
-
+    }
+  }]
+)}
 ```
 
 ---
@@ -196,9 +193,7 @@ When the given value is a ValueXY instead of a Value, each config option may be 
 ### `decay()`
 
 ```js
-
 static decay(value, config)
-
 ```
 
 Animates a value from an initial velocity to zero based on a decay coefficient.
@@ -215,12 +210,10 @@ Config is an object that may have the following options:
 ### `timing()`
 
 ```js
-
 static timing(value, config)
-
 ```
 
-Animates a value along a timed easing curve. The [`Easing`](../easing/) module has tons of predefined curves, or you can use your own function.
+Animates a value along a timed easing curve. The [`Easing`](easing.md) module has tons of predefined curves, or you can use your own function.
 
 Config is an object that may have the following options:
 
@@ -235,9 +228,7 @@ Config is an object that may have the following options:
 ### `spring()`
 
 ```js
-
 static spring(value, config)
-
 ```
 
 Animates a value according to an analytical spring model based on [damped harmonic oscillation](https://en.wikipedia.org/wiki/Harmonic_oscillator#Damped_harmonic_oscillator). Tracks velocity state to create fluid motions as the `toValue` updates, and can be chained together.
@@ -274,9 +265,7 @@ Other configuration options are as follows:
 ### `add()`
 
 ```js
-
 static add(a, b)
-
 ```
 
 Creates a new Animated value composed from two Animated values added together.
@@ -286,9 +275,7 @@ Creates a new Animated value composed from two Animated values added together.
 ### `subtract()`
 
 ```js
-
 static subtract(a, b)
-
 ```
 
 Creates a new Animated value composed by subtracting the second Animated value from the first Animated value.
@@ -298,9 +285,7 @@ Creates a new Animated value composed by subtracting the second Animated value f
 ### `divide()`
 
 ```js
-
 static divide(a, b)
-
 ```
 
 Creates a new Animated value composed by dividing the first Animated value by the second Animated value.
@@ -310,9 +295,7 @@ Creates a new Animated value composed by dividing the first Animated value by th
 ### `multiply()`
 
 ```js
-
 static multiply(a, b)
-
 ```
 
 Creates a new Animated value composed from two Animated values multiplied together.
@@ -322,9 +305,7 @@ Creates a new Animated value composed from two Animated values multiplied togeth
 ### `modulo()`
 
 ```js
-
 static modulo(a, modulus)
-
 ```
 
 Creates a new Animated value that is the (non-negative) modulo of the provided Animated value
@@ -334,9 +315,7 @@ Creates a new Animated value that is the (non-negative) modulo of the provided A
 ### `diffClamp()`
 
 ```js
-
 static diffClamp(a, min, max)
-
 ```
 
 Create a new Animated value that is limited between 2 values. It uses the difference between the last value so even if the value is far from the bounds it will start changing when the value starts getting closer again. (`value = clamp(value + diff, min, max)`).
@@ -348,9 +327,7 @@ This is useful with scroll events, for example, to show the navbar when scrollin
 ### `delay()`
 
 ```js
-
 static delay(time)
-
 ```
 
 Starts an animation after the given delay.
@@ -360,9 +337,7 @@ Starts an animation after the given delay.
 ### `sequence()`
 
 ```js
-
 static sequence(animations)
-
 ```
 
 Starts an array of animations in order, waiting for each to complete before starting the next. If the current running animation is stopped, no following animations will be started.
@@ -372,9 +347,7 @@ Starts an array of animations in order, waiting for each to complete before star
 ### `parallel()`
 
 ```js
-
 static parallel(animations, config?)
-
 ```
 
 Starts an array of animations all at the same time. By default, if one of the animations is stopped, they will all be stopped. You can override this with the `stopTogether` flag.
@@ -384,9 +357,7 @@ Starts an array of animations all at the same time. By default, if one of the an
 ### `stagger()`
 
 ```js
-
 static stagger(time, animations)
-
 ```
 
 Array of animations may run in parallel (overlap), but are started in sequence with successive delays. Nice for doing trailing effects.
@@ -396,9 +367,7 @@ Array of animations may run in parallel (overlap), but are started in sequence w
 ### `loop()`
 
 ```js
-
 static loop(animation, config?)
-
 ```
 
 Loops a given animation continuously, so that each time it reaches the end, it resets and begins again from the start. Will loop without blocking the JS thread if the child animation is set to `useNativeDriver: true`. In addition, loops can prevent `VirtualizedList`-based components from rendering more rows while the animation is running. You can pass `isInteraction: false` in the child animation config to fix this.
@@ -412,26 +381,22 @@ Config is an object that may have the following options:
 ### `event()`
 
 ```js
-
 static event(argMapping, config?)
-
 ```
 
 Takes an array of mappings and extracts values from each arg accordingly, then calls `setValue` on the mapped outputs. e.g.
 
 ```js
-
- onScroll={Animated.event(
-   [{nativeEvent: {contentOffset: {x: this._scrollX}}}],
-   {listener: (event) => console.log(event)}, // Optional async listener
- )}
- ...
- onPanResponderMove: Animated.event([
-   null,                // raw event arg ignored
-   {dx: this._panX}],    // gestureState arg
-{listener: (event, gestureState) => console.log(event, gestureState)}, // Optional async listener
- ),
-
+onScroll={Animated.event(
+  [{nativeEvent: {contentOffset: {x: this._scrollX}}}],
+  {listener: (event) => console.log(event)}, // Optional async listener
+)}
+...
+onPanResponderMove: Animated.event([
+  null,                // raw event arg ignored
+  {dx: this._panX}],    // gestureState arg
+  {listener: (event, gestureState) => console.log(event, gestureState)}, // Optional async listener
+),
 ```
 
 Config is an object that may have the following options:
@@ -444,9 +409,7 @@ Config is an object that may have the following options:
 ### `forkEvent()`
 
 ```js
-
 static forkEvent(event, listener)
-
 ```
 
 Advanced imperative API for snooping on animated events that are passed in through props. It permits to add a new javascript listener to an existing `AnimatedEvent`. If `animatedEvent` is a javascript listener, it will merge the 2 listeners into a single one, and if `animatedEvent` is null/undefined, it will assign the javascript listener directly. Use values directly where possible.
@@ -456,9 +419,7 @@ Advanced imperative API for snooping on animated events that are passed in throu
 ### `unforkEvent()`
 
 ```js
-
 static unforkEvent(event, listener)
-
 ```
 
 ---
@@ -505,14 +466,13 @@ static reset()
 
 Stops any running animation and resets the value to its original.
 
-
 ## Properties
 
 ### `Value`
 
 Standard value class for driving animations. Typically initialized with `new Animated.Value(0);`
 
-You can read more about `Animated.Value` API on the separate [page](../animatedvalue/).
+You can read more about `Animated.Value` API on the separate [page](animatedvalue.md).
 
 ---
 
@@ -520,7 +480,7 @@ You can read more about `Animated.Value` API on the separate [page](../animatedv
 
 2D value class for driving 2D animations, such as pan gestures.
 
-+You can read more about `Animated.ValueXY` API on the separate [page](../animatedvaluexy/).
+You can read more about `Animated.ValueXY` API on the separate [page](animatedvaluexy.md).
 
 ---
 

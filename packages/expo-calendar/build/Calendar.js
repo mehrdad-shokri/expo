@@ -1,6 +1,6 @@
 import { UnavailabilityError } from '@unimodules/core';
+import { PermissionStatus } from 'expo-modules-core';
 import { Platform, processColor } from 'react-native';
-import { PermissionStatus } from 'unimodules-permissions-interface';
 import ExpoCalendar from './ExpoCalendar';
 export var DayOfTheWeek;
 (function (DayOfTheWeek) {
@@ -315,7 +315,7 @@ export function openEventInCalendar(id) {
     return ExpoCalendar.openEventInCalendar(parseInt(id, 10));
 } // Android
 /**
- * @deprecated Use requestCalendarPermissionsAsync()
+ * @deprecated Use `requestCalendarPermissionsAsync()` instead
  */
 export async function requestPermissionsAsync() {
     console.warn('requestPermissionsAsync is deprecated. Use requestCalendarPermissionsAsync instead.');

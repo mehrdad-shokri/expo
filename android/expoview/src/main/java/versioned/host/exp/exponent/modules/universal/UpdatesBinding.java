@@ -4,8 +4,6 @@ package versioned.host.exp.exponent.modules.universal;
 
 import android.content.Context;
 
-import org.unimodules.core.interfaces.InternalModule;
-
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
@@ -15,17 +13,19 @@ import javax.inject.Inject;
 
 import expo.modules.updates.UpdatesConfiguration;
 import expo.modules.updates.UpdatesInterface;
+import expo.modules.updates.UpdatesService;
 import expo.modules.updates.db.DatabaseHolder;
 import expo.modules.updates.db.entity.AssetEntity;
 import expo.modules.updates.db.entity.UpdateEntity;
 import expo.modules.updates.launcher.Launcher;
-import expo.modules.updates.launcher.SelectionPolicy;
+import expo.modules.updates.selectionpolicy.SelectionPolicy;
+import expo.modules.updates.loader.FileDownloader;
 import host.exp.exponent.ExpoUpdatesAppLoader;
 import host.exp.exponent.di.NativeModuleDepsProvider;
 import host.exp.exponent.kernel.KernelConstants;
 import host.exp.exponent.kernel.KernelProvider;
 
-public class UpdatesBinding implements InternalModule, UpdatesInterface {
+public class UpdatesBinding extends UpdatesService implements UpdatesInterface {
 
   @Inject
   DatabaseHolder mDatabaseHolder;
@@ -36,7 +36,7 @@ public class UpdatesBinding implements InternalModule, UpdatesInterface {
   private ExpoUpdatesAppLoader mAppLoader;
 
   public UpdatesBinding(Context context, Map<String, Object> experienceProperties) {
-    super();
+    super(context);
     NativeModuleDepsProvider.getInstance().inject(UpdatesBinding.class, this);
 
     mManifestUrl = (String)experienceProperties.get(KernelConstants.MANIFEST_URL_KEY);
@@ -64,6 +64,11 @@ public class UpdatesBinding implements InternalModule, UpdatesInterface {
   }
 
   @Override
+  public FileDownloader getFileDownloader() {
+    return mAppLoader.getFileDownloader();
+  }
+
+  @Override
   public DatabaseHolder getDatabaseHolder() {
     return mDatabaseHolder;
   }
@@ -76,6 +81,11 @@ public class UpdatesBinding implements InternalModule, UpdatesInterface {
   @Override
   public boolean isUsingEmbeddedAssets() {
     return false;
+  }
+
+  @Override
+  public boolean canRelaunch() {
+    return true;
   }
 
   @Override
@@ -92,5 +102,10 @@ public class UpdatesBinding implements InternalModule, UpdatesInterface {
   public void relaunchReactApplication(Launcher.LauncherCallback callback) {
     KernelProvider.getInstance().reloadVisibleExperience(mManifestUrl, true);
     callback.onSuccess();
+  }
+
+  @Override
+  public void resetSelectionPolicy() {
+    // no-op in managed
   }
 }

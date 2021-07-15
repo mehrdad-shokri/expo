@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import * as GoogleSignIn from 'expo-google-sign-in';
 import React from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
@@ -16,7 +17,9 @@ interface State {
   };
 }
 
-export default class GoogleSignInScreen extends React.Component<object, State> {
+// See: https://github.com/expo/expo/pull/10229#discussion_r490961694
+// eslint-disable-next-line @typescript-eslint/ban-types
+export default class GoogleSignInScreen extends React.Component<{}, State> {
   static navigationOptions = {
     title: 'Native Google Sign-In',
   };
@@ -68,10 +71,20 @@ export default class GoogleSignInScreen extends React.Component<object, State> {
 
   render() {
     const { user } = this.state;
+    const isInExpoGo = Constants.executionEnvironment === 'storeClient';
+
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        {isInExpoGo && (
+          <Text style={{ padding: 12 }}>
+            This library cannot be used in Expo Go as the native GoogleSignIn library expects your
+            REVERSED_CLIENT_ID in the info.plist at build-time.
+          </Text>
+        )}
         {user && <GoogleProfile {...user} />}
-        <GoogleSignInButton onPress={this._toggleAuth}>{this.buttonTitle}</GoogleSignInButton>
+        <GoogleSignInButton disabled={isInExpoGo} onPress={this._toggleAuth}>
+          {this.buttonTitle}
+        </GoogleSignInButton>
       </View>
     );
   }

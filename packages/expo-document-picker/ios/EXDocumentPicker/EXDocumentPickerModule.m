@@ -3,7 +3,7 @@
 
 #import <EXDocumentPicker/EXDocumentPickerModule.h>
 #import <UMCore/UMUtilitiesInterface.h>
-#import <UMFileSystemInterface/UMFileSystemInterface.h>
+#import <ExpoModulesCore/EXFileSystemInterface.h>
 
 #import <UIKit/UIKit.h>
 #import <MobileCoreServices/MobileCoreServices.h>
@@ -60,10 +60,10 @@ static NSString * EXConvertMimeTypeToUTI(NSString *mimeType)
   return (__bridge_transfer NSString *)uti;
 }
 
-@interface EXDocumentPickerModule () <UIDocumentPickerDelegate>
+@interface EXDocumentPickerModule () <UIDocumentPickerDelegate, UIAdaptivePresentationControllerDelegate>
 
 @property (nonatomic, weak) UMModuleRegistry *moduleRegistry;
-@property (nonatomic, weak) id<UMFileSystemInterface> fileSystem;
+@property (nonatomic, weak) id<EXFileSystemInterface> fileSystem;
 @property (nonatomic, weak) id<UMUtilitiesInterface> utilities;
 
 @property (nonatomic, strong) UMPromiseResolveBlock resolve;
@@ -82,7 +82,7 @@ UM_EXPORT_MODULE(ExpoDocumentPicker);
   _moduleRegistry = moduleRegistry;
   
   if (_moduleRegistry != nil) {
-    _fileSystem = [moduleRegistry getModuleImplementingProtocol:@protocol(UMFileSystemInterface)];
+    _fileSystem = [moduleRegistry getModuleImplementingProtocol:@protocol(EXFileSystemInterface)];
     _utilities = [moduleRegistry getModuleImplementingProtocol:@protocol(UMUtilitiesInterface)];
   }
 }
@@ -109,16 +109,20 @@ UM_EXPORT_METHOD_AS(getDocumentAsync,
     UIDocumentPickerViewController *documentPickerVC;
 
     @try {
-      if (@available(iOS 14, *)) {
+      // TODO: drop #if macro once Xcode is updated to 12
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 140000
+      if (@available(iOS 14, *)) {
         UTType* utType = EXConvertMimeTypeToUTType(mimeType);
         documentPickerVC = [[UIDocumentPickerViewController alloc] initForOpeningContentTypes:@[utType] asCopy:YES];
-#endif
       } else {
+#endif
         NSString* type = EXConvertMimeTypeToUTI(mimeType);
         documentPickerVC = [[UIDocumentPickerViewController alloc] initWithDocumentTypes:@[type]
                                                                                   inMode:UIDocumentPickerModeImport];
+        // TODO: drop #if macro once Xcode is updated to 12
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 140000
       }
+#endif
     }
     @catch (NSException *exception) {
       reject(@"E_PICKER_ICLOUD", @"DocumentPicker requires the iCloud entitlement. If you are using ExpoKit, you need to add this capability to your App Id. See `https://docs.expo.io/versions/latest/expokit/advanced-expokit-topics#using-documentpicker` for more info.", nil);
@@ -127,6 +131,7 @@ UM_EXPORT_METHOD_AS(getDocumentAsync,
       return;
     }
     documentPickerVC.delegate = self;
+    documentPickerVC.presentationController.delegate = self;
 
     // Because of the way IPad works with Actionsheets such as this one, we need to provide a source view and set it's position.
     if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
@@ -178,11 +183,18 @@ UM_EXPORT_METHOD_AS(getDocumentAsync,
   _reject = nil;
 }
 
+// Document picker view controller has been cancelled with a button
 - (void)documentPickerWasCancelled:(UIDocumentPickerViewController *)controller
 {
   _resolve(@{@"type": @"cancel"});
   _resolve = nil;
   _reject = nil;
+}
+
+// Document picker view controller has been dismissed by gesture
+- (void)presentationControllerDidDismiss:(UIPresentationController *)presentationController
+{
+  [self documentPickerWasCancelled:presentationController.presentedViewController];
 }
 
 + (unsigned long long)getFileSize:(NSString *)path error:(NSError **)error

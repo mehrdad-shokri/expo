@@ -1,8 +1,8 @@
 import * as React from 'react';
-import { ActivityIndicator, StyleSheet } from 'react-native';
+import { ActivityIndicator, Platform, StyleSheet } from 'react-native';
 
-import Colors from '../constants/Colors';
 import { Page, Section } from '../components/Page';
+import Colors from '../constants/Colors';
 
 function ActivityIndicatorStopping({ hidesWhenStopped }: { hidesWhenStopped?: boolean }) {
   const [animating, setAnimating] = React.useState(true);
@@ -34,17 +34,21 @@ export default function ActivityIndicatorScreen() {
     <Page>
       <Section title="Custom Color" row>
         <ActivityIndicator style={styles.item} size="large" color={Colors.tintColor} />
-        <ActivityIndicator style={styles.item} size="large" color={'red'} />
-        <ActivityIndicator size="large" color={'blue'} />
+        <ActivityIndicator style={styles.item} size="large" color="red" />
+        <ActivityIndicator size="large" color="blue" />
       </Section>
-      <Section title="hidesWhenStopped" row>
-        <ActivityIndicatorStopping hidesWhenStopped={false} />
-        <ActivityIndicatorStopping hidesWhenStopped />
-      </Section>
-      <Section title="Larger" row>
-        <ActivityIndicator style={styles.item} size="small" />
-        <ActivityIndicator size="large" />
-      </Section>
+      {Platform.OS === 'android' ? null : (
+        <>
+          <Section title="hidesWhenStopped" row>
+            <ActivityIndicatorStopping hidesWhenStopped={false} />
+            <ActivityIndicatorStopping hidesWhenStopped />
+          </Section>
+          <Section title="Larger" row>
+            <ActivityIndicator style={styles.item} size="small" />
+            <ActivityIndicator size="large" />
+          </Section>
+        </>
+      )}
     </Page>
   );
 }

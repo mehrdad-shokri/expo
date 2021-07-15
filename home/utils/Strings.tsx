@@ -1,7 +1,8 @@
+import { A } from '@expo/html-elements';
 import * as React from 'react';
 import stringReplace from 'react-string-replace';
+
 import Colors from '../constants/Colors';
-import { A } from '@expo/html-elements';
 
 const MENTIONS_REGULAR_EXPRESSION = /@([A-Za-z0-9-_]+)/g;
 const HREF_REGULAR_EXPRESSION = /(https?:\/\/\S+)/g;
@@ -11,7 +12,7 @@ const linkStyle = {
   color: Colors.light.tintColor,
 };
 
-const matchHashtagToLinkComponents = (match, key) => {
+const matchHashtagToLinkComponents = (match: string, key: number) => {
   const url = `https://expo.io/tags/${match}`;
   return (
     <A style={linkStyle} key={match + key} href={url}>
@@ -20,7 +21,7 @@ const matchHashtagToLinkComponents = (match, key) => {
   );
 };
 
-const matchTwitterToLinkComponents = (match, key) => {
+const matchTwitterToLinkComponents = (match: string, key: number) => {
   const url = `https://twitter.com/@${match}`;
   return (
     <A style={linkStyle} key={match + key} href={url}>
@@ -29,7 +30,7 @@ const matchTwitterToLinkComponents = (match, key) => {
   );
 };
 
-const matchExpoToLinkComponents = (match, key) => {
+const matchExpoToLinkComponents = (match: string, key: number) => {
   const url = `https://expo.io/@${match}`;
   return (
     <A style={linkStyle} key={match + key} href={url}>
@@ -38,7 +39,7 @@ const matchExpoToLinkComponents = (match, key) => {
   );
 };
 
-const matchHrefToLinkComponents = (match, key) => {
+const matchHrefToLinkComponents = (match: string, key: number) => {
   return (
     <A style={linkStyle} key={`${match}${key}`} href={match}>
       {match}

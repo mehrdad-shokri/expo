@@ -3,7 +3,7 @@ id: easing
 title: Easing
 ---
 
-The `Easing` module implements common easing functions. This module is used by [Animated.timing()](../animated/#timing) to convey physically believable motion in animations.
+The `Easing` module implements common easing functions. This module is used by [Animated.timing()](animated.md#timing) to convey physically believable motion in animations.
 
 You can find a visualization of some common easing functions at http://easings.net/
 
@@ -11,41 +11,50 @@ You can find a visualization of some common easing functions at http://easings.n
 
 The `Easing` module provides several predefined animations through the following methods:
 
-- [`back`](../easing/#back) provides a basic animation where the object goes slightly back before moving forward
-- [`bounce`](../easing/#bounce) provides a bouncing animation
-- [`ease`](../easing/#ease) provides a basic inertial animation
-- [`elastic`](../easing/#elastic) provides a basic spring interaction
+- [`back`](easing.md#back) provides a basic animation where the object goes slightly back before moving forward
+- [`bounce`](easing.md#bounce) provides a bouncing animation
+- [`ease`](easing.md#ease) provides a basic inertial animation
+- [`elastic`](easing.md#elastic) provides a basic spring interaction
 
 ### Standard functions
 
 Three standard easing functions are provided:
 
-- [`linear`](../easing/#linear)
-- [`quad`](../easing/#quad)
-- [`cubic`](../easing/#cubic)
+- [`linear`](easing.md#linear)
+- [`quad`](easing.md#quad)
+- [`cubic`](easing.md#cubic)
 
-The [`poly`](../easing/#poly) function can be used to implement quartic, quintic, and other higher power functions.
+The [`poly`](easing.md#poly) function can be used to implement quartic, quintic, and other higher power functions.
 
 ### Additional functions
 
 Additional mathematical functions are provided by the following methods:
 
-- [`bezier`](../easing/#bezier) provides a cubic bezier curve
-- [`circle`](../easing/#circle) provides a circular function
-- [`sin`](../easing/#sin) provides a sinusoidal function
-- [`exp`](../easing/#exp) provides an exponential function
+- [`bezier`](easing.md#bezier) provides a cubic bezier curve
+- [`circle`](easing.md#circle) provides a circular function
+- [`sin`](easing.md#sin) provides a sinusoidal function
+- [`exp`](easing.md#exp) provides an exponential function
 
 The following helpers are used to modify other easing functions.
 
-- [`in`](../easing/#in) runs an easing function forwards
-- [`inOut`](../easing/#inout) makes any easing function symmetrical
-- [`out`](../easing/#out) runs an easing function backwards
+- [`in`](easing.md#in) runs an easing function forwards
+- [`inOut`](easing.md#inout) makes any easing function symmetrical
+- [`out`](easing.md#out) runs an easing function backwards
 
 ## Example
 
 ```js
-import React from "react";
-import { Animated, Easing, SectionList, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React from 'react';
+import {
+  Animated,
+  Easing,
+  SectionList,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 export default function App() {
   let opacity = new Animated.Value(0);
@@ -55,13 +64,13 @@ export default function App() {
     Animated.timing(opacity, {
       toValue: 1,
       duration: 1200,
-      easing
+      easing,
     }).start();
   };
 
   const size = opacity.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 80]
+    outputRange: [0, 80],
   });
 
   const animatedStyles = [
@@ -69,28 +78,23 @@ export default function App() {
     {
       opacity,
       width: size,
-      height: size
-    }
+      height: size,
+    },
   ];
 
   return (
     <View style={styles.container}>
       <StatusBar hidden={true} />
-      <Text style={styles.title}>
-        Press rows below to preview the Easing!
-      </Text>
+      <Text style={styles.title}>Press rows below to preview the Easing!</Text>
       <View style={styles.boxContainer}>
         <Animated.View style={animatedStyles} />
       </View>
       <SectionList
         style={styles.list}
         sections={SECTIONS}
-        keyExtractor={(item) => item.title}
+        keyExtractor={item => item.title}
         renderItem={({ item }) => (
-          <TouchableOpacity
-            onPress={() => animate(item.easing)}
-            style={styles.listRow}
-          >
+          <TouchableOpacity onPress={() => animate(item.easing)} style={styles.listRow}>
             <Text>{item.title}</Text>
           </TouchableOpacity>
         )}
@@ -104,88 +108,87 @@ export default function App() {
 
 const SECTIONS = [
   {
-    title: "Predefined animations",
+    title: 'Predefined animations',
     data: [
-      { title: "Bounce", easing: Easing.bounce },
-      { title: "Ease", easing: Easing.ease },
-      { title: "Elastic", easing: Easing.elastic(4) }
-    ]
+      { title: 'Bounce', easing: Easing.bounce },
+      { title: 'Ease', easing: Easing.ease },
+      { title: 'Elastic', easing: Easing.elastic(4) },
+    ],
   },
   {
-    title: "Standard functions",
+    title: 'Standard functions',
     data: [
-      { title: "Linear", easing: Easing.linear },
-      { title: "Quad", easing: Easing.quad },
-      { title: "Cubic", easing: Easing.cubic }
-    ]
+      { title: 'Linear', easing: Easing.linear },
+      { title: 'Quad', easing: Easing.quad },
+      { title: 'Cubic', easing: Easing.cubic },
+    ],
   },
   {
-    title: "Additional functions",
+    title: 'Additional functions',
     data: [
       {
-        title: "Bezier",
-        easing: Easing.bezier(0, 2, 1, -1)
+        title: 'Bezier',
+        easing: Easing.bezier(0, 2, 1, -1),
       },
-      { title: "Circle", easing: Easing.circle },
-      { title: "Sin", easing: Easing.sin },
-      { title: "Exp", easing: Easing.exp }
-    ]
+      { title: 'Circle', easing: Easing.circle },
+      { title: 'Sin', easing: Easing.sin },
+      { title: 'Exp', easing: Easing.exp },
+    ],
   },
   {
-    title: "Combinations",
+    title: 'Combinations',
     data: [
       {
-        title: "In + Bounce",
-        easing: Easing.in(Easing.bounce)
+        title: 'In + Bounce',
+        easing: Easing.in(Easing.bounce),
       },
       {
-        title: "Out + Exp",
-        easing: Easing.out(Easing.exp)
+        title: 'Out + Exp',
+        easing: Easing.out(Easing.exp),
       },
       {
-        title: "InOut + Elastic",
-        easing: Easing.inOut(Easing.elastic(1))
-      }
-    ]
-  }
+        title: 'InOut + Elastic',
+        easing: Easing.inOut(Easing.elastic(1)),
+      },
+    ],
+  },
 ];
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#20232a"
+    backgroundColor: '#20232a',
   },
   title: {
     marginTop: 10,
-    textAlign: "center",
-    color: "#61dafb"
+    textAlign: 'center',
+    color: '#61dafb',
   },
   boxContainer: {
     height: 160,
-    alignItems: "center"
+    alignItems: 'center',
   },
   box: {
     marginTop: 32,
     borderRadius: 4,
-    backgroundColor: "#61dafb"
+    backgroundColor: '#61dafb',
   },
   list: {
-    backgroundColor: "#fff"
+    backgroundColor: '#fff',
   },
   listHeader: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    backgroundColor: "#f4f4f4",
-    color: "#999",
+    backgroundColor: '#f4f4f4',
+    color: '#999',
     fontSize: 12,
-    textTransform: "uppercase"
+    textTransform: 'uppercase',
   },
   listRow: {
-    padding: 8
-  }
+    padding: 8,
+  },
 });
 ```
-
 
 ---
 
@@ -359,9 +362,11 @@ A useful tool to visualize cubic bezier curves can be found at http://cubic-bezi
 
 ### `in()`
 
+<!-- prettier-ignore-start -->
 ```js
 static in(easing);
 ```
+<!-- prettier-ignore-end -->
 
 Runs an easing function forwards.
 

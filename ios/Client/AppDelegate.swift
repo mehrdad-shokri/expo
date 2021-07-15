@@ -3,7 +3,7 @@
 import Foundation
 
 @UIApplicationMain
-class AppDelegate: UMAppDelegateWrapper {
+class AppDelegate: AppDelegateWrapper {
   var rootViewController: EXRootViewController?
 
   override func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
@@ -14,13 +14,6 @@ class AppDelegate: UMAppDelegateWrapper {
 
     super.application(application, didFinishLaunchingWithOptions: launchOptions)
 
-    // SplashScreen module registers SplashScreenView automatically for window.rootViewController (EXRootViewController),
-    // and we want it to register for EXViewController (that is found in rootViewContrller view hierarchy),
-    // so we need to hide it for window.rootViewController
-    let splashScreenService: EXSplashScreenService = UMModuleRegistryProvider.getSingletonModule(for: EXSplashScreenService.self) as! EXSplashScreenService
-    splashScreenService.hideSplashScreen(for: (window?.rootViewController)!,
-                                         successCallback: { (success) in /* empty */ },
-                                         failureCallback: { (message) in /* empty */ })
     return true
   }
 

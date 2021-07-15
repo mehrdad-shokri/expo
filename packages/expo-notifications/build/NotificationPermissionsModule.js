@@ -1,5 +1,5 @@
-import { canUseDOM } from 'fbjs/lib/ExecutionEnvironment';
-import { PermissionStatus } from 'unimodules-permissions-interface';
+import { Platform } from '@unimodules/core';
+import { PermissionStatus } from 'expo-modules-core';
 function convertPermissionStatus(status) {
     switch (status) {
         case 'granted':
@@ -26,14 +26,26 @@ function convertPermissionStatus(status) {
     }
 }
 async function resolvePermissionAsync({ shouldAsk, }) {
-    if (!canUseDOM) {
+    if (!Platform.isDOMAvailable) {
         return convertPermissionStatus('denied');
     }
     const { Notification = {} } = window;
     if (typeof Notification.requestPermission !== 'undefined') {
         let status = Notification.permission;
         if (shouldAsk) {
-            status = await Notification.requestPermission();
+            status = await new Promise((resolve, reject) => {
+                let resolved = false;
+                function resolveOnce(status) {
+                    if (!resolved) {
+                        resolved = true;
+                        resolve(status);
+                    }
+                }
+                // Some browsers require a callback argument and some return a Promise
+                Notification.requestPermission(resolveOnce)
+                    ?.then(resolveOnce)
+                    ?.catch(reject);
+            });
         }
         return convertPermissionStatus(status);
     }

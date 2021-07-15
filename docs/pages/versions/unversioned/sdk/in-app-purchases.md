@@ -1,6 +1,6 @@
 ---
 title: InAppPurchases
-sourceCodeUrl: 'https://github.com/expo/expo/tree/sdk-36/packages/expo-in-app-purchases'
+sourceCodeUrl: 'https://github.com/expo/expo/tree/master/packages/expo-in-app-purchases'
 ---
 
 import PlatformsSection from '~/components/plugins/PlatformsSection';
@@ -11,9 +11,9 @@ import PlatformsSection from '~/components/plugins/PlatformsSection';
 
 ## Installation
 
-This module is currently only available in the [bare](../../introduction/managed-vs-bare/#bare-workflow) workflow.
+This module is currently only available in the [bare](../../../introduction/managed-vs-bare.md#bare-workflow) workflow.
 
-You must ensure that you have [installed and configured the `react-native-unimodules` package](https://github.com/unimodules/react-native-unimodules) before continuing.
+You must ensure that you have [installed and configured the `react-native-unimodules` package](https://github.com/expo/expo/tree/master/packages/react-native-unimodules) before continuing.
 
 ### Add the package to your dependencies
 
@@ -139,10 +139,7 @@ setPurchaseListener(({ responseCode, results, errorCode }) => {
         finishTransactionAsync(purchase, true);
       }
     });
-  }
-
-  // Else find out what went wrong
-  if (responseCode === IAPResponseCode.USER_CANCELED) {
+  } else if (responseCode === IAPResponseCode.USER_CANCELED) {
     console.log('User canceled the transaction');
   } else if (responseCode === IAPResponseCode.DEFERRED) {
     console.log('User does not have permissions to buy but requested parental approval (iOS only)');

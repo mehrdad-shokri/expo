@@ -18,15 +18,17 @@
 #import <React/RCTRedBox.h>
 #import <React/RCTAsyncLocalStorage.h>
 
+// Expo modules
 
-// Unimodules
-
-#import <UMCore/UMModuleRegistry.h>
-#import <UMReactNativeAdapter/UMNativeModulesProxy.h>
-#import <UMReactNativeAdapter/UMModuleRegistryAdapter.h>
-#import <UMCore/UMAppDelegateWrapper.h>
+#import <ExpoModulesCore/EXModuleRegistry.h>
+#import <ExpoModulesCore/EXNativeModulesProxy.h>
+#import <ExpoModulesCore/EXModuleRegistryAdapter.h>
+#import <ExpoModulesCore/EXAppDelegateWrapper.h>
 
 // OTA Updates
 
 //#import <EXUpdates/EXUpdatesAppController.h>
 
+// Dev Client
+
+#import <EXDevLauncher/EXDevLauncherController.h>

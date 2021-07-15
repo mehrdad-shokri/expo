@@ -1,11 +1,15 @@
 import { UnavailabilityError } from '@unimodules/core';
-import uuidv4 from 'uuid/v4';
+import { v4 as uuidv4 } from 'uuid';
 
 import NotificationPresenter from './NotificationPresenterModule';
 import { NotificationContentInput } from './Notifications.types';
 
 let warningMessageShown = false;
 
+/**
+ * @deprecated Use `scheduleNotificationAsync` with an explicit notification handler.
+ * [Read more](https://expo.fyi/presenting-notifications-deprecated).
+ */
 export default async function presentNotificationAsync(
   content: NotificationContentInput,
   identifier: string = uuidv4()

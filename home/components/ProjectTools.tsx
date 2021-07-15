@@ -51,7 +51,7 @@ function EnabledProjectTools({ pollForUpdates }: Props) {
     (props: State, state: Partial<State>): State => ({ ...props, ...state }),
     initialState
   );
-  const clipboardUpdateInterval = React.useRef<null | number>(null);
+  const clipboardUpdateInterval = React.useRef<null | ReturnType<typeof setInterval>>(null);
 
   const appState = useAppState();
 
@@ -110,7 +110,7 @@ function EnabledProjectTools({ pollForUpdates }: Props) {
   return (
     <View>
       {FeatureFlags.ENABLE_QR_CODE_BUTTON && (
-        <QRCodeButton last={!FeatureFlags.ENABLE_CLIPBOARD_BUTTON} />
+        <QRCodeButton last margins={!FeatureFlags.ENABLE_CLIPBOARD_BUTTON} />
       )}
       {FeatureFlags.ENABLE_CLIPBOARD_BUTTON && (
         <OpenFromClipboardButton

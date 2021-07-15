@@ -1,16 +1,18 @@
-export const WebBrowserResultType = {
+// @needsAudit @docsMissing
+export var WebBrowserResultType;
+(function (WebBrowserResultType) {
     /**
-     * iOS only
+     * iOS only.
      */
-    CANCEL: 'cancel',
+    WebBrowserResultType["CANCEL"] = "cancel";
     /**
-     * iOS only
+     * iOS only.
      */
-    DISMISS: 'dismiss',
+    WebBrowserResultType["DISMISS"] = "dismiss";
     /**
-     * Android only
+     * Android only.
      */
-    OPENED: 'opened',
-    LOCKED: 'locked',
-};
+    WebBrowserResultType["OPENED"] = "opened";
+    WebBrowserResultType["LOCKED"] = "locked";
+})(WebBrowserResultType || (WebBrowserResultType = {}));
 //# sourceMappingURL=WebBrowser.types.js.map

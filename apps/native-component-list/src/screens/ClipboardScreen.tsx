@@ -1,5 +1,6 @@
+import * as Clipboard from 'expo-clipboard';
 import * as React from 'react';
-import { Button, Clipboard, Text, TextInput } from 'react-native';
+import { Button, Text, TextInput } from 'react-native';
 
 import { Page, Section } from '../components/Page';
 
@@ -12,12 +13,15 @@ export default function ClipboardScreen() {
       <Section title="Get String">
         <GetStringExample />
       </Section>
+      <Section title="Clipboard listener">
+        <ListenerExample />
+      </Section>
     </Page>
   );
 }
 
 ClipboardScreen.navigationOptions = {
-  title: 'StatusBar',
+  title: 'Clipboard',
 };
 
 function GetStringExample() {
@@ -29,7 +33,7 @@ function GetStringExample() {
 
       <Button
         onPress={async () => {
-          const value = await Clipboard.getString();
+          const value = await Clipboard.getStringAsync();
           console.log('got clipboard:', value);
           setValue(value);
         }}
@@ -46,17 +50,43 @@ function SetStringExample() {
     <>
       <Button
         onPress={() => {
-          console.log('copy to clipboard:', value);
           Clipboard.setString(value);
         }}
         title="Copy to clipboard"
       />
       <TextInput
-        multiline={true}
+        multiline
         onChangeText={setValue}
         value={value}
         style={{ padding: 8, height: 48, margin: 8, borderBottomWidth: 1 }}
       />
+    </>
+  );
+}
+
+function ListenerExample() {
+  const clipboardListener = React.useRef<Clipboard.Subscription | null>(null);
+  const [value, setValue] = React.useState('');
+
+  React.useEffect(() => {
+    clipboardListener.current = Clipboard.addClipboardListener(
+      ({ content }: { content: string }) => {
+        setValue(content);
+      }
+    );
+
+    return () => {
+      if (clipboardListener.current) {
+        Clipboard.removeClipboardListener(clipboardListener.current);
+      }
+    };
+  }, []);
+
+  return (
+    <>
+      <Text style={{ padding: 8, height: 48, margin: 8, borderBottomWidth: 1 }}>
+        Clipboard value changed to: {value}
+      </Text>
     </>
   );
 }

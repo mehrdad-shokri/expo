@@ -21,6 +21,11 @@ export { default as cancelAllScheduledNotificationsAsync } from './cancelAllSche
 export { default as getNotificationCategoriesAsync } from './getNotificationCategoriesAsync';
 export { default as setNotificationCategoryAsync } from './setNotificationCategoryAsync';
 export { default as deleteNotificationCategoryAsync } from './deleteNotificationCategoryAsync';
+export { default as getNextTriggerDateAsync } from './getNextTriggerDateAsync';
+export { default as useLastNotificationResponse } from './useLastNotificationResponse';
+export { setAutoServerRegistrationEnabledAsync } from './DevicePushTokenAutoRegistration.fx';
+export { default as registerTaskAsync } from './registerTaskAsync';
+export { default as unregisterTaskAsync } from './unregisterTaskAsync';
 export * from './TokenEmitter';
 export * from './NotificationsEmitter';
 export * from './NotificationsHandler';

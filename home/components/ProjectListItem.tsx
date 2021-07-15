@@ -1,11 +1,11 @@
 import { useNavigation } from '@react-navigation/native';
 import * as React from 'react';
-import { Linking, Share, StyleSheet, Text, View } from 'react-native';
+import { Linking, Share, StyleSheet, View } from 'react-native';
 
 import Colors from '../constants/Colors';
 import * as UrlUtils from '../utils/UrlUtils';
 import { useSDKExpired } from '../utils/useSDKExpired';
-import { Experience } from './ExperienceView.types';
+import Badge from './Badge';
 import ListItem from './ListItem';
 import { StyledText } from './Text';
 
@@ -15,7 +15,12 @@ type Props = React.ComponentProps<typeof ListItem> & {
   releaseChannel?: string;
   username?: string;
   sdkVersion?: string;
-  experienceInfo?: Pick<Experience, 'username' | 'slug'>;
+  experienceInfo?: {
+    id: string;
+    username: string;
+    slug: string;
+  };
+  onPressUsername?: (username: string) => void;
 };
 
 function ProjectListItem({
@@ -32,42 +37,35 @@ function ProjectListItem({
 
   const renderRightContent = React.useCallback((): React.ReactNode => {
     return (
-      <View style={styles.rightContentContainer}>
-        {releaseChannel && (
-          <View style={styles.releaseChannelContainer}>
-            <Text style={styles.releaseChannelText} numberOfLines={1} ellipsizeMode="tail">
-              {releaseChannel}
-            </Text>
-          </View>
-        )}
-      </View>
+      releaseChannel && (
+        <View style={styles.rightContentContainer}>
+          <Badge text={releaseChannel} />
+        </View>
+      )
     );
   }, [isExpired, releaseChannel]);
 
   const handlePress = () => {
-    // Open the project info page when it's stale.
-    if (isExpired && props.experienceInfo) {
-      handleLongPress();
-      return;
+    if (props.experienceInfo) {
+      navigation.navigate('Project', { id: props.experienceInfo.id });
+    } else if (url) {
+      Linking.openURL(UrlUtils.normalizeUrl(url));
     }
-    Linking.openURL(UrlUtils.normalizeUrl(url));
   };
 
   const handleLongPress = () => {
-    if (props.experienceInfo) {
-      navigation.navigate('Experience', props.experienceInfo);
-    } else {
-      const message = UrlUtils.normalizeUrl(url);
-      Share.share({
-        title: url,
-        message,
-        url: message,
-      });
-    }
+    const message = UrlUtils.normalizeUrl(url);
+    Share.share({
+      title: url,
+      message,
+      url: message,
+    });
   };
 
   const handlePressUsername = () => {
-    navigation.navigate('Profile', { username });
+    if (props.onPressUsername && username) {
+      props.onPressUsername(username);
+    }
   };
 
   const renderExtraText = React.useCallback(
@@ -106,25 +104,8 @@ const styles = StyleSheet.create({
   rightContentContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  expiredIconContainer: {
-    marginRight: 4,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  releaseChannelContainer: {
-    marginEnd: 5,
+    marginEnd: 10,
     marginStart: 5,
-    backgroundColor: 'rgba(0,0,0,0.025)',
-    borderRadius: 4,
-    paddingHorizontal: 5,
-    paddingVertical: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  releaseChannelText: {
-    color: '#888',
-    fontSize: 11,
   },
 });
 

@@ -1,67 +1,81 @@
 package expo.modules.devmenu.modules
 
+import android.os.Build
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
 import com.facebook.react.bridge.ReadableMap
+import expo.modules.devmenu.modules.internals.DevMenuInternalFontManagerModule
+import expo.modules.devmenu.modules.internals.DevMenuInternalMenuControllerModule
+import expo.modules.devmenu.modules.internals.DevMenuInternalSessionManagerModule
+import expo.modules.devmenu.modules.internals.DevMenuInternalWebBrowserModule
 
-class DevMenuInternalModule(reactContext: ReactApplicationContext)
-  : ReactContextBaseJavaModule(reactContext) {
+interface DevMenuInternalMenuControllerModuleInterface {
+  @ReactMethod
+  fun dispatchCallableAsync(callableId: String?, args: ReadableMap?, promise: Promise)
+
+  @ReactMethod
+  fun hideMenu()
+
+  @ReactMethod
+  fun setOnboardingFinished(finished: Boolean)
+
+  @ReactMethod
+  fun getSettingsAsync(promise: Promise)
+
+  @ReactMethod
+  fun setSettingsAsync(settings: ReadableMap, promise: Promise)
+
+  @ReactMethod
+  fun openDevMenuFromReactNative()
+
+  @ReactMethod
+  fun onScreenChangeAsync(currentScreen: String?, promise: Promise)
+
+  @ReactMethod
+  fun fetchDataSourceAsync(id: String?, promise: Promise)
+}
+
+interface DevMenuInternalSessionManagerModuleInterface {
+  fun restoreSession(): String?
+
+  @ReactMethod
+  fun restoreSessionAsync(promise: Promise)
+
+  @ReactMethod
+  fun setSessionAsync(session: ReadableMap?, promise: Promise)
+}
+
+interface DevMenuInternalFontManagerModuleInterface {
+  @ReactMethod
+  fun loadFontsAsync(promise: Promise)
+}
+
+interface DevMenuInternalWebBrowserModuleInterface {
+  @ReactMethod
+  fun openWebBrowserAsync(startUrl: String?, promise: Promise)
+}
+
+class DevMenuInternalModule(
+  reactContext: ReactApplicationContext
+) : ReactContextBaseJavaModule(reactContext),
+  DevMenuInternalFontManagerModuleInterface by DevMenuInternalFontManagerModule(reactContext),
+  DevMenuInternalWebBrowserModuleInterface by DevMenuInternalWebBrowserModule(reactContext),
+  DevMenuInternalSessionManagerModuleInterface by DevMenuInternalSessionManagerModule(reactContext),
+  DevMenuInternalMenuControllerModuleInterface by DevMenuInternalMenuControllerModule(reactContext) {
+
+  override fun initialize() {
+    restoreSession()
+  }
   override fun getName() = "ExpoDevMenuInternal"
 
-  private val devMenuManger by lazy {
-    reactContext
-      .getNativeModule(DevMenuManagerProvider::class.java)
-      .getDevMenuManager()
-  }
+  private val doesDeviceSupportKeyCommands
+    get() = Build.FINGERPRINT.contains("vbox") || Build.FINGERPRINT.contains("generic")
 
-  private val devMenuSettings by lazy {
-    reactContext
-      .getNativeModule(DevMenuSettings::class.java)
-  }
-
-  @ReactMethod
-  fun dispatchActionAsync(actionId: String?, promise: Promise) {
-    if (actionId == null) {
-      promise.reject("ERR_DEVMENU_ACTION_FAILED", "Action ID not provided.")
-      return
-    }
-    devMenuManger.dispatchAction(actionId)
-    promise.resolve(null)
-  }
-
-  @ReactMethod
-  fun hideMenu() {
-    devMenuManger.hideMenu()
-  }
-
-  @ReactMethod
-  fun setOnboardingFinished(finished: Boolean) {
-    devMenuSettings.isOnboardingFinished = finished
-  }
-
-  @ReactMethod
-  fun getSettingsAsync(promise: Promise) = promise.resolve(devMenuSettings.serialize())
-
-  @ReactMethod
-  fun setSettingsAsync(settings: ReadableMap, promise: Promise) {
-    if (settings.hasKey("motionGestureEnabled")) {
-      devMenuSettings.motionGestureEnabled = settings.getBoolean("motionGestureEnabled")
-    }
-
-    if (settings.hasKey("keyCommandsEnabled")) {
-      devMenuSettings.keyCommandsEnabled = settings.getBoolean("keyCommandsEnabled")
-    }
-
-    if (settings.hasKey("showsAtLaunch")) {
-      devMenuSettings.showsAtLaunch = settings.getBoolean("showsAtLaunch")
-    }
-
-    if (settings.hasKey("touchGestureEnabled")) {
-      devMenuSettings.touchGestureEnabled = settings.getBoolean("touchGestureEnabled")
-    }
-
-    promise.resolve(null)
+  override fun getConstants(): Map<String, Any> {
+    return mapOf(
+      "doesDeviceSupportKeyCommands" to doesDeviceSupportKeyCommands
+    )
   }
 }

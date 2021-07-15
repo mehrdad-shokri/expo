@@ -1,13 +1,15 @@
+import { StackScreenProps } from '@react-navigation/stack';
+import * as BarCodeScanner from 'expo-barcode-scanner';
 import { BlurView } from 'expo-blur';
-import { Camera } from 'expo-camera';
 import { throttle } from 'lodash';
 import React from 'react';
 import { Linking, Platform, StatusBar, StyleSheet, Text, View } from 'react-native';
-import { useSafeArea } from 'react-native-safe-area-context';
-import * as BarCodeScanner from 'expo-barcode-scanner';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Camera } from '../components/Camera';
 import QRFooterButton from '../components/QRFooterButton';
 import QRIndicator from '../components/QRIndicator';
+import { AllStackRoutes } from '../navigation/Navigation.types';
 
 type State = {
   isVisible: boolean;
@@ -16,7 +18,9 @@ type State = {
 
 const initialState: State = { isVisible: Platform.OS === 'ios', url: null };
 
-export default function BarCodeScreen(props) {
+export default function BarCodeScreen(
+  props: StackScreenProps<AllStackRoutes, 'Diagnostics'> & State
+) {
   const [state, setState] = React.useReducer(
     (props: State, state: Partial<State>): State => ({ ...props, ...state }),
     initialState
@@ -24,7 +28,7 @@ export default function BarCodeScreen(props) {
   const [isLit, setLit] = React.useState(false);
 
   React.useEffect(() => {
-    let timeout;
+    let timeout: ReturnType<typeof setTimeout>;
     if (!state.isVisible) {
       timeout = setTimeout(() => {
         setState({ isVisible: true });
@@ -68,7 +72,7 @@ export default function BarCodeScreen(props) {
     if (Platform.OS === 'ios') {
       props.navigation.pop();
     } else {
-      props.navigation.goBack(null);
+      props.navigation.goBack();
     }
   }, []);
 
@@ -76,7 +80,7 @@ export default function BarCodeScreen(props) {
     setLit(isLit => !isLit);
   }, []);
 
-  const { top, bottom } = useSafeArea();
+  const { top, bottom } = useSafeAreaInsets();
 
   return (
     <View style={styles.container}>
@@ -126,6 +130,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 20,
     borderRadius: 16,
+    overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
   },

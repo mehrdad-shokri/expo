@@ -6,13 +6,20 @@ import android.net.Uri
 import android.os.Bundle
 import androidx.core.content.pm.PackageInfoCompat
 import com.facebook.react.ReactInstanceManager
+import expo.interfaces.devmenu.DevMenuSessionInterface
 
 /**
  * Class that represents a "session".
  * A session represents lifecycle/state of the dev menu while it is opened (between opening it and closing it).
  */
-class DevMenuSession(private val reactInstanceManager: ReactInstanceManager, initAppInfo: Bundle?) {
-  val appInfo = initAppInfo ?: guessAppInfo()
+class DevMenuSession(
+  initReactInstanceManager: ReactInstanceManager,
+  initAppInfo: Bundle?,
+  screen: String?
+) : DevMenuSessionInterface {
+  override val reactInstanceManager = initReactInstanceManager
+  override val appInfo = initAppInfo ?: guessAppInfo()
+  override val openScreen = screen
 
   /**
    * Constructs app info `Bundle` based on the native app metadata such as `ApplicationContext`.
@@ -21,7 +28,7 @@ class DevMenuSession(private val reactInstanceManager: ReactInstanceManager, ini
     val reactContext = reactInstanceManager.currentReactContext ?: return@apply
     val applicationContext = reactContext.applicationContext
     putCharSequence("appName", guessAppName(applicationContext))
-    putLong("appVersion", guessAppVersion(applicationContext))
+    putString("appVersion", guessAppVersion(applicationContext).toString())
     putString("appIcon", guessAppIcon(applicationContext))
     putString("hostUrl", reactContext.catalystInstance?.sourceURL)
   }

@@ -1,4 +1,4 @@
-import { PermissionResponse, PermissionStatus } from 'unimodules-permissions-interface';
+import { PermissionResponse, PermissionStatus } from 'expo-modules-core';
 export declare type RecurringEventOptions = {
     futureEvents?: boolean;
     instanceStartDate?: string | Date;
@@ -170,7 +170,7 @@ export declare function getSourcesAsync(): Promise<Source[]>;
 export declare function getSourceAsync(id: string): Promise<Source>;
 export declare function openEventInCalendar(id: string): void;
 /**
- * @deprecated Use requestCalendarPermissionsAsync()
+ * @deprecated Use `requestCalendarPermissionsAsync()` instead
  */
 export declare function requestPermissionsAsync(): Promise<PermissionResponse>;
 export declare function getCalendarPermissionsAsync(): Promise<PermissionResponse>;

@@ -9,6 +9,10 @@ import * as validators from './utils/validators';
 
 const { StripeModule } = NativeModulesProxy;
 
+console.warn(
+  '`expo-payments-stripe` has been deprecated in favor of `@stripe/stripe-react-native`. For more information on the new library, and how to migrate away from `expo-payments-stripe`, please refer to https://docs.expo.io/versions/latest/sdk/stripe/. This package will no longer be available in SDK 43.'
+);
+
 function checkInit(instance: Stripe) {
   if (!instance.stripeInitialized) {
     throw new Error(
@@ -28,10 +32,10 @@ class Stripe {
     return StripeModule.init(options, errorCodes);
   };
 
-  // @deprecated use deviceSupportsNativePay
+  /** @deprecated use `deviceSupportsNativePay` */
   deviceSupportsAndroidPayAsync = (): Promise<boolean> => StripeModule.deviceSupportsAndroidPay();
 
-  // @deprecated use deviceSupportsNativePay
+  /** @deprecated use `deviceSupportsNativePay` */
   deviceSupportsApplePayAsync = (): Promise<boolean> => StripeModule.deviceSupportsApplePay();
 
   deviceSupportsNativePayAsync = () =>
@@ -41,7 +45,7 @@ class Stripe {
       default: () => Promise.resolve(false),
     })();
 
-  // @deprecated use canMakeNativePayPayments
+  /** @deprecated use `canMakeNativePayPayments` */
   canMakeApplePayPaymentsAsync = (
     options: types.CanMakeApplePayPaymentsOptions = {}
   ): Promise<boolean> => {
@@ -54,7 +58,7 @@ class Stripe {
     return StripeModule.canMakeApplePayPayments(options);
   };
 
-  // @deprecated use canMakeNativePayPayments
+  /** @deprecated use `canMakeNativePayPayments` */
   canMakeAndroidPayPaymentsAsync = (): Promise<boolean> => StripeModule.canMakeAndroidPayPayments();
 
   // iOS requires networks array while Android requires nothing
@@ -65,7 +69,7 @@ class Stripe {
       default: () => Promise.resolve(false),
     })();
 
-  // @deprecated use paymentRequestWithNativePay
+  /** @deprecated use `paymentRequestWithNativePay` */
   paymentRequestWithAndroidPayAsync = (
     options: types.PaymentRequestWithAndroidPayOptions
   ): Promise<types.AndroidToken> => {
@@ -79,7 +83,7 @@ class Stripe {
     return StripeModule.paymentRequestWithAndroidPay(options);
   };
 
-  // @deprecated use paymentRequestWithNativePay
+  /** @deprecated use `paymentRequestWithNativePay` */
   paymentRequestWithApplePayAsync = (
     items: types.PaymentRequestWithApplePayItem[],
     options: types.PaymentRequestWithApplePayOptions
@@ -124,7 +128,7 @@ class Stripe {
     return nativePaymentFunction();
   }
 
-  // @deprecated use completeNativePayRequest
+  /** @deprecated use completeNativePayRequest */
   completeApplePayRequestAsync = (): Promise<void> => {
     checkInit(this);
     return StripeModule.completeApplePayRequest();
@@ -137,7 +141,7 @@ class Stripe {
       default: () => Promise.resolve(),
     })();
 
-  // @deprecated use cancelNativePayRequest
+  /** @deprecated use `cancelNativePayRequest` */
   cancelApplePayRequestAsync = (): Promise<void> => {
     checkInit(this);
     return StripeModule.cancelApplePayRequest();
@@ -150,7 +154,7 @@ class Stripe {
       default: () => Promise.resolve(),
     })();
 
-  // @deprecated use openNativePaySetup
+  /** @deprecated use `openNativePaySetup` */
   openApplePaySetupAsync = (): Promise<void> => StripeModule.openApplePaySetup();
 
   // no corresponding android impl exists

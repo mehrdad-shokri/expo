@@ -1,8 +1,7 @@
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/build/Ionicons';
 import { Asset } from 'expo-asset';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
-import * as Permissions from 'expo-permissions';
 import React from 'react';
 import {
   Image,
@@ -22,7 +21,9 @@ interface State {
   original?: Asset;
 }
 
-export default class ImageManipulatorScreen extends React.Component<object, State> {
+// See: https://github.com/expo/expo/pull/10229#discussion_r490961694
+// eslint-disable-next-line @typescript-eslint/ban-types
+export default class ImageManipulatorScreen extends React.Component<{}, State> {
   static navigationOptions = {
     title: 'ImageManipulator',
   };
@@ -31,13 +32,14 @@ export default class ImageManipulatorScreen extends React.Component<object, Stat
     ready: false,
   };
 
-  async componentDidMount() {
+  componentDidMount() {
     const image = Asset.fromModule(require('../../assets/images/example2.jpg'));
-    await image.downloadAsync();
-    this.setState({
-      ready: true,
-      image,
-      original: image,
+    image.downloadAsync().then(() => {
+      this.setState({
+        ready: true,
+        image,
+        original: image,
+      });
     });
   }
 
@@ -97,20 +99,25 @@ export default class ImageManipulatorScreen extends React.Component<object, Stat
   }
 
   _renderImage = () => {
+    const height =
+      this.state.image?.height && this.state.image?.height < 300 ? this.state.image?.height : 300;
+    const width =
+      this.state.image?.width && this.state.image?.width < 300 ? this.state.image?.width : 300;
+
     return (
       <View style={styles.imageContainer}>
         <Image
           source={{ uri: (this.state.image! as Asset).localUri || this.state.image!.uri }}
-          style={styles.image}
+          style={[styles.image, { height, width }]}
         />
       </View>
     );
   };
 
   _pickPhoto = async () => {
-    const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      alert('Permission to CAMERA_ROLL not granted!');
+      alert('Permission to MEDIA_LIBRARY not granted!');
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -170,15 +177,16 @@ export default class ImageManipulatorScreen extends React.Component<object, Stat
   };
 
   _reset = () => {
-    this.setState({ image: this.state.original });
+    this.setState(state => ({ image: state.original }));
   };
 
   _manipulate = async (
     actions: ImageManipulator.Action[],
     saveOptions?: ImageManipulator.SaveOptions
   ) => {
+    const { image } = this.state;
     const manipResult = await ImageManipulator.manipulateAsync(
-      (this.state.image! as Asset).localUri || this.state.image!.uri,
+      (image! as Asset).localUri || image!.uri,
       actions,
       saveOptions
     );
@@ -202,8 +210,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   image: {
-    width: 300,
-    height: 300,
     resizeMode: 'contain',
   },
   button: {

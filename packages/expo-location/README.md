@@ -13,7 +13,7 @@ For managed [managed](https://docs.expo.io/versions/latest/introduction/managed-
 
 # Installation in bare React Native projects
 
-For bare React Native projects, you must ensure that you have [installed and configured the `react-native-unimodules` package](https://github.com/unimodules/react-native-unimodules) before continuing.
+For bare React Native projects, you must ensure that you have [installed and configured the `react-native-unimodules` package](https://github.com/expo/expo/tree/master/packages/react-native-unimodules) before continuing.
 
 ### Add the package to your npm dependencies
 
@@ -44,9 +44,13 @@ This module requires the permissions for approximate and exact device location. 
 <!-- Added permissions -->
 <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-<uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+<!-- Optional permissions -->
+<uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
 ```
+
+> **Note:** on Android, you have to [submit your app for review and request access to use the background location permission](https://support.google.com/googleplay/android-developer/answer/9799150?hl=en).
 
 # Contributing
 

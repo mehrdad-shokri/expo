@@ -4,17 +4,15 @@ class DevMenuAppInstance: NSObject, RCTBridgeDelegate {
   static private var CloseEventName = "closeDevMenu"
 
   private let manager: DevMenuManager
-  private let moduleRegistryAdapter: UMModuleRegistryAdapter
 
   var bridge: RCTBridge?
 
   init(manager: DevMenuManager) {
     self.manager = manager
-    self.moduleRegistryAdapter = UMModuleRegistryAdapter.init(moduleRegistryProvider: UMModuleRegistryProvider.init());
 
     super.init()
 
-    self.bridge = RCTBridge.init(delegate: self, launchOptions: nil)
+    self.bridge = DevMenuRCTBridge.init(delegate: self, launchOptions: nil)
   }
 
   /**
@@ -29,21 +27,17 @@ class DevMenuAppInstance: NSObject, RCTBridgeDelegate {
   func sourceURL(for bridge: RCTBridge!) -> URL! {
     #if DEBUG
     if let packagerHost = jsPackagerHost() {
-      if RCTBundleURLProvider.sharedSettings()?.isPackagerRunning(packagerHost) == true {
-        return RCTBundleURLProvider.jsBundleURL(forBundleRoot: "index", packagerHost: packagerHost, enableDev: true, enableMinification: false)
-      }
-      print("Expo DevMenu packager host \(packagerHost) not found, falling back to bundled source file...");
+      return RCTBundleURLProvider.jsBundleURL(forBundleRoot: "index", packagerHost: packagerHost, enableDev: true, enableMinification: false)
     }
     #endif
     return jsSourceUrl()
   }
 
   func extraModules(for bridge: RCTBridge!) -> [RCTBridgeModule]! {
-    let internalModule = DevMenuInternalModule(manager: manager)
-
-    var modules: [RCTBridgeModule] = [internalModule]
-    modules.append(contentsOf: moduleRegistryAdapter.extraModules(for: bridge))
-
+    var modules: [RCTBridgeModule] = [DevMenuInternalModule(manager: manager)]
+    modules.append(contentsOf: DevMenuVendoredModulesUtils.vendoredModules())
+    modules.append(MockedRNCSafeAreaProvider.init())
+    modules.append(DevMenuLoadingView.init())
     return modules
   }
 
@@ -53,22 +47,13 @@ class DevMenuAppInstance: NSObject, RCTBridgeDelegate {
 
   // MARK: private
 
-  private func resourcesBundle() -> Bundle? {
-    let frameworkBundle = Bundle(for: DevMenuAppInstance.self)
-
-    guard let resourcesBundleUrl = frameworkBundle.url(forResource: "EXDevMenu", withExtension: "bundle") else {
-      return nil
-    }
-    return Bundle(url: resourcesBundleUrl)
-  }
-
   private func jsSourceUrl() -> URL? {
-    return resourcesBundle()?.url(forResource: "EXDevMenuApp.ios", withExtension: "js")
+    return DevMenuUtils.resourcesBundle()?.url(forResource: "EXDevMenuApp.ios", withExtension: "js")
   }
 
   private func jsPackagerHost() -> String? {
     // Return `nil` if resource doesn't exist in the bundle.
-    guard let packagerHostPath = resourcesBundle()?.path(forResource: "dev-menu-packager-host", ofType: nil) else {
+    guard let packagerHostPath = DevMenuUtils.resourcesBundle()?.path(forResource: "dev-menu-packager-host", ofType: nil) else {
       return nil
     }
     // Return `nil` if the content is not a valid URL.

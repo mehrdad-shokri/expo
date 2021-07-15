@@ -1,4 +1,4 @@
-import { PermissionStatus } from 'unimodules-permissions-interface';
+import { PermissionStatus } from 'expo-modules-core';
 const noPermissionResponse = {
     status: PermissionStatus.UNDETERMINED,
     canAskAgain: true,
@@ -31,10 +31,10 @@ export default {
             duration: 'duration',
         };
     },
-    async getPermissionsAsync() {
+    async getPermissionsAsync(_writeOnly) {
         return noPermissionResponse;
     },
-    async requestPermissionsAsync() {
+    async requestPermissionsAsync(_writeOnly) {
         return noPermissionResponse;
     },
 };

@@ -13,13 +13,30 @@ For managed [managed](https://docs.expo.io/versions/latest/introduction/managed-
 
 # Installation in bare React Native projects
 
-For bare React Native projects, you must ensure that you have [installed and configured the `react-native-unimodules` package](https://github.com/unimodules/react-native-unimodules) before continuing.
+For bare React Native projects, you must ensure that you have [installed and configured the `react-native-unimodules` package](https://github.com/expo/expo/tree/master/packages/react-native-unimodules) before continuing.
 
 ### Add the package to your npm dependencies
 
 ```
 expo install expo-constants
 ```
+
+#### Monorepo Support
+
+In a monorepo, the `expo-constants` package might be in a different folder than the native scripts are expecting. You can easily symlink the node module to your app's local `node_modules` folder by doing the following:
+ 
+- Follow the setup instructions for [`expo-yarn-workspaces`](https://github.com/expo/expo/tree/master/packages/expo-yarn-workspaces). 
+- Add the following configuration to your app's `package.json`:
+
+```json
+{
+  "expo-yarn-workspaces": {
+    "symlinks": ["expo-constants"]
+  }
+}
+```
+
+- Finally, run `yarn` in the app folder to create symlinks to `expo-constants` in your app's local `node_modules` folder.
 
 # Contributing
 

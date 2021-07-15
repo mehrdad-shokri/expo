@@ -12,37 +12,37 @@ Note that you must specify some width and height style attributes.
 ## Example
 
 ```js
-import React from "react";
-import { ImageBackground, StyleSheet, Text, View } from "react-native";
+import React from 'react';
+import { ImageBackground, StyleSheet, Text, View } from 'react-native';
 
-const image = { uri: "https://reactjs.org/logo-og.png" };
+const image = { uri: 'https://reactjs.org/logo-og.png' };
 
-const App = () => (
-  <View style={styles.container}>
-    <ImageBackground source={image} style={styles.image}>
-      <Text style={styles.text}>Inside</Text>
-    </ImageBackground>
-  </View>
-);
+export default function App() {
+  return (
+    <View style={styles.container}>
+      <ImageBackground source={image} style={styles.image}>
+        <Text style={styles.text}>Inside</Text>
+      </ImageBackground>
+    </View>
+  );
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    flexDirection: "column"
+    flexDirection: 'column',
   },
   image: {
     flex: 1,
-    resizeMode: "cover",
-    justifyContent: "center"
+    resizeMode: 'cover',
+    justifyContent: 'center',
   },
   text: {
-    color: "grey",
+    color: 'grey',
     fontSize: 30,
-    fontWeight: "bold"
-  }
+    fontWeight: 'bold',
+  },
 });
-
-export default App;
 ```
 
 ---
@@ -51,19 +51,19 @@ export default App;
 
 ## Props
 
-Inherits [Image Props](../image/#props).
+Inherits [Image Props](image.md#props).
 
 ### `style`
 
 | Type                               | Required |
 | ---------------------------------- | -------- |
-| [view styles](../view-style-props/) | No       |
+| [view styles](view-style-props.md) | No       |
 
 ### `imageStyle`
 
 | Type                                 | Required |
 | ------------------------------------ | -------- |
-| [image styles](../image-style-props/) | No       |
+| [image styles](image-style-props.md) | No       |
 
 ### `imageRef`
 
